@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    name: Lint, type-check, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Lint
+        run: poetry run ruff check .
+
+      - name: Format check
+        run: poetry run ruff format --check .
+
+      - name: Type check
+        run: poetry run mypy
+
+      - name: Test
+        run: poetry run pytest
+
+  architecture:
+    name: Validate architecture model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Structurizr DSL
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/docs/architecture:/usr/local/structurizr" \
+            structurizr/cli validate -workspace workspace.dsl

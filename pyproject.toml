@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "mnemos"
+version = "0.0.1"
+description = "Air-gappable, provider-neutral long-term memory for AI conversations"
+authors = ["Louis Bove <louisbove84@users.noreply.github.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "mnemos", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-cov = "^6.0"
+ruff = "^0.8"
+mypy = "^1.13"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]

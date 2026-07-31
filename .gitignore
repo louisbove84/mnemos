@@ -1,0 +1,52 @@
+# --- Secrets: never commit ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+secrets/
+kubeconfig
+*.kubeconfig
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Frontend (Phase 5) ---
+node_modules/
+.vite/
+*.local
+
+# --- Structurizr Lite runtime artifacts ---
+docs/architecture/.structurizr/
+docs/architecture/workspace.json
+
+# --- Data and model artifacts: too large for git ---
+data/
+models/
+*.gguf
+*.safetensors
+*.parquet
+*.duckdb
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# --- Editors ---
+.idea/
+*.swp

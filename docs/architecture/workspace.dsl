@@ -1,0 +1,99 @@
+workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conversations" {
+
+    model {
+        operator = person "Operator" "Deliberates long-running decisions with AI assistants and owns the record"
+
+        clients = softwareSystem "AI Clients" "Claude, Cursor, Open WebUI, or any MCP-capable client" {
+            tags "External"
+        }
+
+        mnemos = softwareSystem "mnemos" "Remembers conversations across providers, on hardware you control" {
+
+            serving = container "Model Serving" "Local LLM inference for extraction and synthesis" "vLLM, Qwen2.5" {
+                tags "Phase 0" "In Progress"
+            }
+            lake = container "Object Store" "Raw exports, bundles, and model artifacts" "MinIO" {
+                tags "Phase 3" "Not Built"
+            }
+            ingest = container "Ingestion Pipeline" "Parses transcripts and exports into timestamped episodes" "Python, Spark" {
+                tags "Phase 3" "Not Built"
+            }
+            archive = container "Transcript Archive" "Immutable verbatim source of truth" "PostgreSQL" {
+                tags "Phase 4" "Not Built"
+            }
+            extract = container "Extraction Service" "Turns episodes into temporal facts and resolves contradictions" "Python, Graphiti" {
+                tags "Phase 4" "Not Built"
+            }
+            graph = container "Context Graph" "Bi-temporal knowledge graph with hybrid retrieval" "Neo4j" {
+                tags "Phase 4" "Not Built"
+            }
+            mcp = container "MCP Server" "Exposes memory as tools over Model Context Protocol" "Python" {
+                tags "Phase 4" "Not Built"
+            }
+            ui = container "Web UI" "Chat, decision journal, and timeline" "React, TypeScript" {
+                tags "Phase 5" "Not Built"
+            }
+        }
+
+        operator -> clients "Converses with"
+        operator -> ui "Reviews decisions and history in"
+        clients -> mcp "Reads and writes memory via MCP"
+        ui -> mcp "Queries memory via"
+        mcp -> graph "Hybrid retrieval from"
+        mcp -> archive "Fetches verbatim excerpts from"
+        mcp -> serving "Synthesises answers using"
+        ingest -> lake "Stores raw exports in"
+        ingest -> archive "Writes transcripts to"
+        ingest -> extract "Emits episodes to"
+        extract -> serving "Extracts entities and facts using"
+        extract -> graph "Writes temporal facts to"
+    }
+
+    views {
+        systemContext mnemos "Context" {
+            include *
+            autolayout lr
+            description "Who uses mnemos and what it connects to."
+        }
+
+        container mnemos "Containers_Current" {
+            include serving
+            autolayout lr
+            description "Built or actively being built today. See README for phase status."
+        }
+
+        container mnemos "Containers_Target" {
+            include *
+            autolayout lr
+            description "TARGET STATE. Aspirational - most of this does not exist yet."
+        }
+
+        styles {
+            element "Person" {
+                shape person
+                background #2c3e50
+                color #ffffff
+            }
+            element "Software System" {
+                background #1168bd
+                color #ffffff
+            }
+            element "External" {
+                background #8e9499
+                color #ffffff
+            }
+            element "Container" {
+                background #438dd5
+                color #ffffff
+            }
+            element "In Progress" {
+                background #e08e0b
+                color #ffffff
+            }
+            element "Not Built" {
+                background #d8dcdf
+                color #55606a
+            }
+        }
+    }
+}
