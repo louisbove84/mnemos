@@ -36,7 +36,7 @@ blog posts:
 
 ```bash
 docker run --rm -v "$(pwd)/docs/architecture:/usr/local/structurizr" \
-  structurizr/cli export -workspace workspace.dsl -format mermaid -output images
+  structurizr/structurizr export -workspace workspace.dsl -format mermaid -output images
 ```
 
 CI validates the DSL on every pull request. Regenerate images when a view changes.
