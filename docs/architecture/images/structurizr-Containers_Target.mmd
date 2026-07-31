@@ -1,0 +1,46 @@
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["Container View: mnemos"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    1["<div style='font-weight: bold'>Operator</div><div style='font-size: 70%; margin-top: 0px'>[Person]</div><div style='font-size: 80%; margin-top:10px'>Deliberates long-running<br />decisions with AI assistants<br />and owns the record</div>"]
+    style 1 fill:#2c3e50,stroke:#1e2b38,color:#ffffff
+    2["<div style='font-weight: bold'>AI Clients</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Claude, Cursor, Open WebUI,<br />or any MCP-capable client</div>"]
+    style 2 fill:#8e9499,stroke:#63676b,color:#ffffff
+
+    subgraph 3 ["mnemos"]
+      style 3 fill:#ffffff,stroke:#0b4884,color:#0b4884
+
+      10["<div style='font-weight: bold'>MCP Server</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Exposes memory as tools over<br />Model Context Protocol</div>"]
+      style 10 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      11["<div style='font-weight: bold'>Web UI</div><div style='font-size: 70%; margin-top: 0px'>[Container: React, TypeScript]</div><div style='font-size: 80%; margin-top:10px'>Chat, decision journal, and<br />timeline</div>"]
+      style 11 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      4["<div style='font-weight: bold'>Model Serving</div><div style='font-size: 70%; margin-top: 0px'>[Container: vLLM, Qwen2.5]</div><div style='font-size: 80%; margin-top:10px'>Local LLM inference for<br />extraction and synthesis</div>"]
+      style 4 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      5["<div style='font-weight: bold'>Object Store</div><div style='font-size: 70%; margin-top: 0px'>[Container: MinIO]</div><div style='font-size: 80%; margin-top:10px'>Raw exports, bundles, and<br />model artifacts</div>"]
+      style 5 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      6["<div style='font-weight: bold'>Ingestion Pipeline</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python, Spark]</div><div style='font-size: 80%; margin-top:10px'>Parses transcripts and<br />exports into timestamped<br />episodes</div>"]
+      style 6 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      7["<div style='font-weight: bold'>Transcript Archive</div><div style='font-size: 70%; margin-top: 0px'>[Container: PostgreSQL]</div><div style='font-size: 80%; margin-top:10px'>Immutable verbatim source of<br />truth</div>"]
+      style 7 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      8["<div style='font-weight: bold'>Extraction Service</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python, Graphiti]</div><div style='font-size: 80%; margin-top:10px'>Turns episodes into temporal<br />facts and resolves<br />contradictions</div>"]
+      style 8 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      9["<div style='font-weight: bold'>Context Graph</div><div style='font-size: 70%; margin-top: 0px'>[Container: Neo4j]</div><div style='font-size: 80%; margin-top:10px'>Bi-temporal knowledge graph<br />with hybrid retrieval</div>"]
+      style 9 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+    end
+
+    1-. "<div>Converses with</div><div style='font-size: 70%'></div>" .->2
+    1-. "<div>Reviews decisions and history<br />in</div><div style='font-size: 70%'></div>" .->11
+    2-. "<div>Reads and writes memory via<br />MCP</div><div style='font-size: 70%'></div>" .->10
+    11-. "<div>Queries memory via</div><div style='font-size: 70%'></div>" .->10
+    10-. "<div>Hybrid retrieval from</div><div style='font-size: 70%'></div>" .->9
+    10-. "<div>Fetches verbatim excerpts<br />from</div><div style='font-size: 70%'></div>" .->7
+    10-. "<div>Synthesises answers using</div><div style='font-size: 70%'></div>" .->4
+    6-. "<div>Stores raw exports in</div><div style='font-size: 70%'></div>" .->5
+    6-. "<div>Writes transcripts to</div><div style='font-size: 70%'></div>" .->7
+    6-. "<div>Emits episodes to</div><div style='font-size: 70%'></div>" .->8
+    8-. "<div>Extracts entities and facts<br />using</div><div style='font-size: 70%'></div>" .->4
+    8-. "<div>Writes temporal facts to</div><div style='font-size: 70%'></div>" .->9
+
+  end
