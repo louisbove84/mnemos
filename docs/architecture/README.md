@@ -7,12 +7,13 @@ apart.
 
 ## Viewing it locally
 
-Structurizr Lite runs offline, needs no account, and hot-reloads when you save the DSL:
+The Structurizr local server runs offline, needs no account, and hot-reloads when you save
+the DSL:
 
 ```bash
 docker run -it --rm -p 8080:8080 \
   -v "$(pwd)/docs/architecture:/usr/local/structurizr" \
-  structurizr/lite
+  structurizr/structurizr local
 ```
 
 Then open <http://localhost:8080>.
