@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: llm
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/louisbove84/mnemos.git
+    targetRevision: main
+    path: deploy/helm/llm
+    helm:
+      # Fixes the release name so rendered resources stay "llm", which is the
+      # Service the smoke-test runbook port-forwards to.
+      releaseName: llm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mnemos
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

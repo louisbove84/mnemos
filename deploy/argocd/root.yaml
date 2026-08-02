@@ -1,0 +1,26 @@
+# The App-of-Apps root. This is the last object applied by hand; from here on
+# adding a component means committing a file to deploy/argocd/applications/.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/louisbove84/mnemos.git
+    targetRevision: main
+    path: deploy/argocd/applications
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      # Deleting a child Application file removes the workload it described.
+      prune: true
+      # Reverts anything changed on the node by hand, which is the point.
+      selfHeal: true
