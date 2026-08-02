@@ -1,0 +1,62 @@
+# The engine behind the OpenAI-compatible contract. Per ADR 0004 this is swappable:
+# a vLLM image with different args serves the same endpoints to the same clients.
+image:
+  repository: ghcr.io/ggml-org/llama.cpp
+  tag: server-cuda
+  pullPolicy: IfNotPresent
+
+# Weights live on the node, not in the image, and not in git.
+model:
+  hostPath: /srv/mnemos/models
+  file: qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
+  contextSize: 2048
+  # 99 offloads every layer it can fit; the GPU has 4 GB.
+  gpuLayers: 99
+
+# Extra flags passed verbatim to the server, for engine-specific tuning.
+extraArgs: []
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# GPU scheduling. runtimeClassName is what routes the pod to the NVIDIA runtime.
+gpu:
+  runtimeClassName: nvidia
+  count: 1
+
+resources:
+  limits:
+    memory: 6Gi
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+# Loading weights from disk takes minutes on this hardware, so the startup probe
+# is given a long budget while liveness stays tight once the server is up.
+probes:
+  enabled: true
+  path: /health
+  startup:
+    periodSeconds: 10
+    failureThreshold: 60
+  liveness:
+    periodSeconds: 30
+    failureThreshold: 3
+  readiness:
+    periodSeconds: 10
+    failureThreshold: 3
+
+metrics:
+  # Exposes Prometheus-format metrics on the same port under /metrics.
+  enabled: true
+  # Requires the Prometheus Operator CRDs, so this stays off until the
+  # observability release has installed them.
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}

@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm.fullname" . }}
+  labels:
+    {{- include "llm.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # One GPU, one pod: a rolling update would deadlock waiting for a device the
+  # outgoing pod still holds.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "llm.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "llm.labels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.gpu.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "--model"
+            - {{ include "llm.modelPath" . | quote }}
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - {{ .Values.service.port | quote }}
+            - "--ctx-size"
+            - {{ .Values.model.contextSize | quote }}
+            - "--n-gpu-layers"
+            - {{ .Values.model.gpuLayers | quote }}
+            {{- if .Values.metrics.enabled }}
+            - "--metrics"
+            {{- end }}
+            {{- with .Values.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          {{- if .Values.probes.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          resources:
+            limits:
+              {{- toYaml .Values.resources.limits | nindent 14 }}
+              nvidia.com/gpu: {{ .Values.gpu.count | quote }}
+            requests:
+              {{- toYaml .Values.resources.requests | nindent 14 }}
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+      volumes:
+        - name: models
+          hostPath:
+            path: {{ .Values.model.hostPath }}
+            type: Directory
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

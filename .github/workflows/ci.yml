@@ -35,6 +35,45 @@ jobs:
       - name: Test
         run: poetry run pytest
 
+  charts:
+    name: Lint and validate Helm charts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSfL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz \
+            | tar -xz -C /usr/local/bin kubeconform
+
+      - name: Add chart repositories
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add gpu-helm-charts https://nvidia.github.io/dcgm-exporter/helm-charts
+          helm repo update
+
+      - name: Lint, render, and schema-check every chart
+        run: |
+          set -euo pipefail
+          for chart in deploy/helm/*/; do
+            name=$(basename "$chart")
+            echo "::group::$name"
+            # Resolves against the committed Chart.lock, so this fails if the
+            # lock and Chart.yaml have drifted apart.
+            if [ -f "$chart/Chart.lock" ]; then
+              helm dependency build "$chart"
+            fi
+            helm lint "$chart"
+            helm template "$name" "$chart" \
+              | kubeconform -strict -summary -ignore-missing-schemas \
+                  -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -
+            echo "::endgroup::"
+          done
+
   architecture:
     name: Validate architecture model
     runs-on: ubuntu-latest
