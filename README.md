@@ -40,7 +40,7 @@ Early. Building in phases, in the open.
 
 | Phase | Focus | State |
 | --- | --- | --- |
-| 0 | GPU inference on Kubernetes (k3s, vLLM) | In progress |
+| 0 | GPU inference on Kubernetes (k3s, OpenAI-compatible serving) | Complete — see [`docs/phases/00-gpu-inference.md`](docs/phases/00-gpu-inference.md) |
 | 1 | Platform foundation (GitOps, Helm, observability) | Not started |
 | 2 | Air-gapped delivery (Harbor, Zarf) | Not started |
 | 3 | Data platform (MinIO, Spark, Delta Lake) | Not started |
