@@ -47,6 +47,29 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
         ingest -> extract "Emits episodes to"
         extract -> serving "Extracts entities and facts using"
         extract -> graph "Writes temporal facts to"
+
+        homelab = deploymentEnvironment "Homelab" {
+            workstation = deploymentNode "Mac workstation" "Authoring and administration only; runs no workload" "macOS" {
+                tools = infrastructureNode "kubectl, helm, browser" "Bootstraps the cluster once, then reads it" "CLI"
+            }
+
+            node = deploymentNode "GPU laptop" "Single-node cluster with an NVIDIA GPU" "Linux, k3s" {
+                traefik = infrastructureNode "Traefik" "Routes hostnames to services" "Ingress, bundled with k3s"
+                argocd = infrastructureNode "Argo CD" "Reconciles the cluster against the git repository" "GitOps"
+                prometheus = infrastructureNode "Prometheus and Grafana" "Collects and displays cluster and GPU metrics" "kube-prometheus-stack"
+
+                deploymentNode "namespace: mnemos" {
+                    servingInstance = containerInstance serving
+                }
+            }
+        }
+
+        tools -> argocd "Bootstraps, then observes"
+        tools -> traefik "Reaches the UIs through"
+        traefik -> argocd "Routes argocd.mnemos.local to"
+        traefik -> prometheus "Routes grafana.mnemos.local to"
+        argocd -> servingInstance "Deploys and self-heals"
+        prometheus -> servingInstance "Scrapes metrics from"
     }
 
     views {
@@ -66,6 +89,12 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
             include *
             autolayout lr
             description "TARGET STATE. Aspirational - most of this does not exist yet."
+        }
+
+        deployment mnemos "Homelab" "Deployment_Homelab" {
+            include *
+            autolayout lr
+            description "Where the built parts actually run, and the platform that puts them there."
         }
 
         styles {

@@ -25,10 +25,15 @@ Then open <http://localhost:8080>.
 | `Context` | Who uses mnemos and what it connects to |
 | `Containers_Current` | Only what is built or actively being built |
 | `Containers_Target` | The full intended system, explicitly aspirational |
+| `Deployment_Homelab` | Which machine runs what, and the platform that puts it there |
 
 The split is deliberate. Diagramming a system that does not exist is how architecture
 becomes fiction, so current state and target state are never mixed in one view. Containers
 are tagged with the phase that delivers them and shaded by build status.
+
+Argo CD, Traefik, and Prometheus are infrastructure nodes in the deployment view rather than
+containers. They are how mnemos is operated, not parts of what mnemos is, and putting them
+in the Container view would blur a distinction worth keeping.
 
 ## Exporting diagrams
 

@@ -1,0 +1,9 @@
+dependencies:
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 88.1.2
+- name: dcgm-exporter
+  repository: https://nvidia.github.io/dcgm-exporter/helm-charts
+  version: 4.8.3
+digest: sha256:a65d1524e9997770aee15e5abcedb39befdb792e54bcb7682d299522b87b79b0
+generated: "2026-08-02T13:15:11.537763-07:00"

@@ -30,6 +30,9 @@ node_modules/
 .vite/
 *.local
 
+# --- Helm: vendored subcharts, rebuilt from the committed Chart.lock ---
+deploy/helm/*/charts/
+
 # --- Structurizr Lite runtime artifacts ---
 docs/architecture/.structurizr/
 docs/architecture/workspace.json
