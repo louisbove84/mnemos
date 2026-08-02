@@ -9,8 +9,8 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
 
         mnemos = softwareSystem "mnemos" "Remembers conversations across providers, on hardware you control" {
 
-            serving = container "Model Serving" "Local LLM inference for extraction and synthesis" "vLLM, Qwen2.5" {
-                tags "Phase 0" "In Progress"
+            serving = container "Model Serving" "Local LLM inference for extraction and synthesis" "OpenAI-compatible HTTP, llama.cpp" {
+                tags "Phase 0"
             }
             lake = container "Object Store" "Raw exports, bundles, and model artifacts" "MinIO" {
                 tags "Phase 3" "Not Built"
