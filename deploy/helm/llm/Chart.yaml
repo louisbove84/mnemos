@@ -1,0 +1,9 @@
+apiVersion: v2
+name: llm
+description: OpenAI-compatible model serving on a GPU node
+type: application
+version: 0.1.0
+appVersion: "server-cuda"
+keywords:
+  - inference
+  - openai-compatible
