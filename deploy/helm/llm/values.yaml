@@ -9,7 +9,7 @@ image:
 model:
   hostPath: /srv/mnemos/models
   file: qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
-  contextSize: 2048
+  contextSize: 4096
   # 99 offloads every layer it can fit; the GPU has 4 GB.
   gpuLayers: 99
 
