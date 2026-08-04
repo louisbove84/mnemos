@@ -49,8 +49,15 @@ kube-prometheus-stack:
 
   grafana:
     enabled: true
-    # Default credentials are admin / prom-operator. The bootstrap runbook
-    # covers changing them; they are not stored here.
+    # Left to itself the chart generates a random admin password on every
+    # render, so each sync produced a different Secret and Argo never reached
+    # Synced. Reading credentials from a secret created out of band keeps them
+    # out of git and makes the rendered output stable. The bootstrap runbook
+    # creates it.
+    admin:
+      existingSecret: grafana-admin
+      userKey: admin-user
+      passwordKey: admin-password
     ingress:
       enabled: true
       ingressClassName: traefik
@@ -98,12 +105,15 @@ dcgm-exporter:
   serviceMonitor:
     enabled: true
     interval: 30s
+  # DCGM embeds a host engine and needs materially more than the 128Mi first
+  # guessed here, which got it OOMKilled in a crash loop on startup. This
+  # matches the chart's own default ceiling.
   resources:
     requests:
       cpu: 50m
-      memory: 64Mi
-    limits:
       memory: 128Mi
+    limits:
+      memory: 512Mi
 
 # Ships the GPU and serving dashboard as a ConfigMap for the Grafana sidecar.
 dashboards:

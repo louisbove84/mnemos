@@ -21,8 +21,12 @@ stays `Pending` forever.
 
 ```bash
 export KUBECONFIG=~/.kube/mnemos-laptop.yaml
-kubectl -n default delete deployment llm service llm --ignore-not-found
+kubectl -n default delete deployment/llm service/llm --ignore-not-found
 ```
+
+Use the `type/name` form. Writing `delete deployment llm service llm` reads `service` as
+another Deployment name, and `--ignore-not-found` then hides the fact that the Service was
+never touched.
 
 Verify the GPU is free before continuing:
 
@@ -55,7 +59,28 @@ kubectl -n argocd get pods
 Expect `argocd-server`, `argocd-repo-server`, `argocd-application-controller`, and
 `argocd-redis` running. The applicationset controller shows `0/0`; that is intentional.
 
-## 2. Hand over to the root application
+## 2. Create the Grafana admin credentials
+
+Grafana's chart invents a random admin password every time it renders, which would leave Argo
+CD permanently OutOfSync and rotating the password on every sync. The chart is configured to
+read an existing secret instead, so that secret has to exist before the application syncs.
+
+```bash
+kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl -n observability create secret generic grafana-admin \
+  --from-literal=admin-user=admin \
+  --from-literal=admin-password="$(openssl rand -base64 24)"
+```
+
+Read the password back when you need it:
+
+```bash
+kubectl -n observability get secret grafana-admin \
+  -o jsonpath='{.data.admin-password}' | base64 -d; echo
+```
+
+## 3. Hand over to the root application
 
 ```bash
 kubectl apply -f deploy/argocd/root.yaml
@@ -68,10 +93,11 @@ This is the last `kubectl apply` in the project. From here the root app watches
 kubectl -n argocd get applications
 ```
 
-Expect `root` and `llm`, both progressing toward `Synced` / `Healthy`. The `llm` app creates
-the `mnemos` namespace itself.
+Expect `root`, `llm`, and `observability`, all progressing toward `Synced` / `Healthy`. The
+`llm` app creates the `mnemos` namespace itself. Observability takes a few minutes: it pulls
+the Prometheus, Grafana, and DCGM images and waits on a volume claim.
 
-## 3. Reach the UIs from the Mac
+## 4. Reach the UIs from the Mac
 
 Traefik routes by hostname, so the workstation needs to resolve those names to the node.
 Find the node's address and add both hostnames to `/etc/hosts`:
@@ -82,10 +108,10 @@ kubectl get nodes -o wide
 
 ```text
 # /etc/hosts on the Mac — substitute the node's real address
-192.168.1.50  argocd.mnemos.local grafana.mnemos.local
+192.168.1.10  argocd.mnemos.local grafana.mnemos.local
 ```
 
-Fetch the generated admin password:
+Fetch Argo CD's generated admin password:
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret \
