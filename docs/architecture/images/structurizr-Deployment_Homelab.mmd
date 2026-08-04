@@ -1,0 +1,39 @@
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["Deployment View: mnemos - Homelab"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    subgraph 26 ["Mac workstation"]
+      style 26 fill:#ffffff,stroke:#444444,color:#444444
+
+      27["<div style='font-weight: bold'>kubectl, helm, browser</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: CLI]</div><div style='font-size: 80%; margin-top:10px'>Bootstraps the cluster once,<br />then reads it</div>"]
+      style 27 fill:#ffffff,stroke:#444444,color:#444444
+    end
+
+    subgraph 28 ["GPU laptop"]
+      style 28 fill:#ffffff,stroke:#444444,color:#444444
+
+      29["<div style='font-weight: bold'>Traefik</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: Ingress, bundled with k3s]</div><div style='font-size: 80%; margin-top:10px'>Routes hostnames to services</div>"]
+      style 29 fill:#ffffff,stroke:#444444,color:#444444
+      30["<div style='font-weight: bold'>Argo CD</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: GitOps]</div><div style='font-size: 80%; margin-top:10px'>Reconciles the cluster<br />against the git repository</div>"]
+      style 30 fill:#ffffff,stroke:#444444,color:#444444
+      31["<div style='font-weight: bold'>Prometheus and Grafana</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: kube-prometheus-stack]</div><div style='font-size: 80%; margin-top:10px'>Collects and displays cluster<br />and GPU metrics</div>"]
+      style 31 fill:#ffffff,stroke:#444444,color:#444444
+      subgraph 32 ["namespace: mnemos"]
+        style 32 fill:#ffffff,stroke:#444444,color:#444444
+
+        33["<div style='font-weight: bold'>Model Serving</div><div style='font-size: 70%; margin-top: 0px'>[Container: OpenAI-compatible HTTP, llama.cpp]</div><div style='font-size: 80%; margin-top:10px'>Local LLM inference for<br />extraction and synthesis</div>"]
+        style 33 fill:#438dd5,stroke:#2e6295,color:#ffffff
+      end
+
+    end
+
+    27-. "<div>Bootstraps, then observes</div><div style='font-size: 70%'></div>" .->30
+    27-. "<div>Reaches the UIs through</div><div style='font-size: 70%'></div>" .->29
+    29-. "<div>Routes argocd.mnemos.local to</div><div style='font-size: 70%'></div>" .->30
+    29-. "<div>Routes grafana.mnemos.local<br />to</div><div style='font-size: 70%'></div>" .->31
+    30-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->33
+    31-. "<div>Scrapes metrics from</div><div style='font-size: 70%'></div>" .->33
+
+  end

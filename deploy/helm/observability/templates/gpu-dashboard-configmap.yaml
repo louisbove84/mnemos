@@ -1,0 +1,119 @@
+{{- if .Values.dashboards.enabled }}
+{{- $g := index .Values "kube-prometheus-stack" "grafana" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-gpu-serving-dashboard
+  labels:
+    {{ $g.sidecar.dashboards.label }}: "1"
+    app.kubernetes.io/part-of: mnemos
+data:
+  # Panels omit an explicit datasource so they resolve to Grafana's default,
+  # which kube-prometheus-stack points at its own Prometheus.
+  gpu-serving.json: |
+    {
+      "uid": "mnemos-gpu-serving",
+      "title": "mnemos / GPU and serving",
+      "tags": ["mnemos"],
+      "schemaVersion": 39,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "GPU utilisation",
+          "description": "Percentage of time the GPU was busy.",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+          "fieldConfig": {
+            "defaults": { "unit": "percent", "min": 0, "max": 100 },
+            "overrides": []
+          },
+          "targets": [
+            { "refId": "A", "expr": "DCGM_FI_DEV_GPU_UTIL", "legendFormat": "gpu util" }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "GPU memory used",
+          "description": "VRAM in use. This card has 4 GB, so headroom here decides which models fit.",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+          "fieldConfig": {
+            "defaults": { "unit": "decmbytes", "min": 0 },
+            "overrides": []
+          },
+          "targets": [
+            { "refId": "A", "expr": "DCGM_FI_DEV_FB_USED", "legendFormat": "vram used" }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "GPU temperature",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "fieldConfig": {
+            "defaults": { "unit": "celsius", "min": 0 },
+            "overrides": []
+          },
+          "targets": [
+            { "refId": "A", "expr": "DCGM_FI_DEV_GPU_TEMP", "legendFormat": "temp" }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Model server memory",
+          "description": "Working set of the llm container against its 6Gi limit.",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "fieldConfig": {
+            "defaults": { "unit": "bytes", "min": 0 },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"mnemos\", container=\"server\"})",
+              "legendFormat": "working set"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Model server restarts",
+          "description": "Non-zero usually means the weights did not fit or the liveness probe timed out.",
+          "gridPos": { "h": 6, "w": 6, "x": 0, "y": 16 },
+          "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(kube_pod_container_status_restarts_total{namespace=\"mnemos\", container=\"server\"})",
+              "legendFormat": "restarts"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Requests in flight",
+          "description": "From the llama.cpp metrics endpoint. Empty if the engine is swapped for one that names its metrics differently.",
+          "gridPos": { "h": 6, "w": 18, "x": 6, "y": 16 },
+          "fieldConfig": { "defaults": { "unit": "short", "min": 0 }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "llamacpp:requests_processing",
+              "legendFormat": "processing"
+            },
+            {
+              "refId": "B",
+              "expr": "llamacpp:requests_deferred",
+              "legendFormat": "deferred"
+            }
+          ]
+        }
+      ]
+    }
+{{- end }}

@@ -1,0 +1,110 @@
+kube-prometheus-stack:
+  # Nothing to page, nobody to page (ADR 0006). Re-enabling this is the change
+  # to make once there is a notification path worth routing to.
+  alertmanager:
+    enabled: false
+
+  # k3s runs the control plane as one process rather than four components, so
+  # these scrape targets do not exist and would sit permanently down.
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+
+      # Without these, Prometheus only discovers monitors carrying this
+      # release's label, and the llm chart's ServiceMonitor would be ignored.
+      # This is what lets a component opt into monitoring from its own chart.
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+
+      # emptyDir would discard the series on every restart, which makes the
+      # retention setting above a fiction. local-path is k3s's built-in class.
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-path
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+
+      # The node's real job is inference; this ceiling is what keeps the
+      # monitoring from competing with the model for RAM.
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+
+  grafana:
+    enabled: true
+    # Default credentials are admin / prom-operator. The bootstrap runbook
+    # covers changing them; they are not stored here.
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      hosts:
+        - grafana.mnemos.local
+    persistence:
+      enabled: true
+      storageClassName: local-path
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    sidecar:
+      dashboards:
+        enabled: true
+        # Dashboards are picked up from any ConfigMap carrying this label,
+        # so a component can ship its own.
+        label: grafana_dashboard
+        searchNamespace: ALL
+
+  kube-state-metrics:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+
+  prometheus-node-exporter:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+
+dcgm-exporter:
+  enabled: true
+  # Same runtime class the model server uses; without it the exporter cannot
+  # see the device.
+  runtimeClassName: nvidia
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# Ships the GPU and serving dashboard as a ConfigMap for the Grafana sidecar.
+dashboards:
+  enabled: true

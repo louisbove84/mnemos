@@ -50,10 +50,10 @@ probes:
 metrics:
   # Exposes Prometheus-format metrics on the same port under /metrics.
   enabled: true
-  # Requires the Prometheus Operator CRDs, so this stays off until the
-  # observability release has installed them.
+  # Requires the Prometheus Operator CRDs, which the observability release
+  # installs in an earlier sync wave.
   serviceMonitor:
-    enabled: false
+    enabled: true
     interval: 30s
 
 nodeSelector: {}

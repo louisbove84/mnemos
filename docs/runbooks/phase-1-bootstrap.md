@@ -12,6 +12,24 @@ Run it once per cluster. After it completes, changes reach the node by merging t
 - `helm` and `kubectl` on the workstation
 - The node can reach `github.com` (see ADR 0005 on why this is a problem for Phase 2)
 
+## 0. Remove the Phase 0 deployment
+
+Phase 0 applied `llm` into the `default` namespace by hand. Phase 1 deploys it into `mnemos`
+instead, and Argo CD will not adopt or prune something it never created. The node has one
+GPU, so if the old pod is left running it keeps `nvidia.com/gpu` allocated and the new pod
+stays `Pending` forever.
+
+```bash
+export KUBECONFIG=~/.kube/mnemos-laptop.yaml
+kubectl -n default delete deployment llm service llm --ignore-not-found
+```
+
+Verify the GPU is free before continuing:
+
+```bash
+kubectl describe node | grep -A3 'Allocated resources' -A12 | grep nvidia.com/gpu
+```
+
 ## 1. Install Argo CD
 
 ```bash

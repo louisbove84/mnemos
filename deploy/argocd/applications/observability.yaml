@@ -1,8 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: llm
+  name: observability
   namespace: argocd
+  annotations:
+    # Installs the Prometheus Operator CRDs that other applications' monitors
+    # depend on, so it goes first.
+    argocd.argoproj.io/sync-wave: "-1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,23 +14,22 @@ spec:
   source:
     repoURL: https://github.com/louisbove84/mnemos.git
     targetRevision: main
-    path: deploy/helm/llm
+    path: deploy/helm/observability
     helm:
-      # Fixes the release name so rendered resources stay "llm", which is the
-      # Service the smoke-test runbook port-forwards to.
-      releaseName: llm
+      releaseName: observability
   destination:
     server: https://kubernetes.default.svc
-    namespace: mnemos
+    namespace: observability
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    # The ServiceMonitor needs CRDs from the observability application, which
-    # syncs in an earlier wave. Retrying covers the case where it has not
-    # finished yet on a first-time bootstrap.
+      # The Prometheus Operator CRDs exceed the 262144-byte annotation limit
+      # that a client-side apply writes into last-applied-configuration.
+      # Server-side apply is the only way this chart syncs at all.
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
