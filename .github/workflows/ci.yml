@@ -74,6 +74,14 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Validate Argo CD Application manifests
+        run: |
+          set -euo pipefail
+          kubeconform -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            deploy/argocd/root.yaml deploy/argocd/applications/
+
   architecture:
     name: Validate architecture model
     runs-on: ubuntu-latest

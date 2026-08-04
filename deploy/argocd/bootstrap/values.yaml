@@ -1,0 +1,67 @@
+# Values for the one-time Argo CD install. This is the only chart in the
+# repository that a human installs by hand; see the Phase 1 bootstrap runbook.
+#
+# Argo CD deliberately does not manage Argo CD (ADR 0005), so upgrading means
+# re-running helm upgrade with this file rather than editing a synced manifest.
+
+global:
+  domain: argocd.mnemos.local
+
+configs:
+  params:
+    # TLS terminates at Traefik, so the API server speaks plain HTTP behind it.
+    # Without this the ingress and the server both try to redirect to HTTPS.
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+# The node runs model inference, so every component here is trimmed to leave
+# RAM for the GPU workload.
+controller:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# Single operator, single identity provider: the local admin account is enough.
+dex:
+  enabled: false
+
+# No notification path exists yet, for the same reason Alertmanager is off
+# in the observability chart (ADR 0006).
+notifications:
+  enabled: false
+
+# App-of-Apps is the chosen layout, so the ApplicationSet controller is dead
+# weight until the repository outgrows it (ADR 0005). The chart has no enable
+# flag for it, so it is scaled to zero instead; raising this to 1 is all that
+# is needed to start using ApplicationSets later.
+applicationSet:
+  replicas: 0
