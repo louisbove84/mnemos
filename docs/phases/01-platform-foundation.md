@@ -47,6 +47,28 @@ Alertmanager is off. There is no notification path worth routing to yet, and the
 better spent on inference. The consequence is real: the cluster can fail quietly, and
 problems get found by looking rather than by being told.
 
+## What the first real bootstrap taught
+
+Three things only showed up when this ran against actual hardware.
+
+**A chart that generates a random value cannot be reconciled.** Grafana invents an admin
+password every time it renders, so every sync produced a different Secret and Argo CD never
+reached Synced. With self-heal on it would have rotated the password indefinitely. Reading
+credentials from a secret created out of band fixes it. The general lesson is that any chart
+with a random default is a GitOps hazard, and it is worth checking for before adding a
+dependency.
+
+**A sync that waits on an unhealthy resource blocks its own fix.** dcgm-exporter was
+`OOMKilled` because the memory ceiling here was a guess, and Argo sat in a Running sync
+waiting for it to become healthy. Because the operation never finished, the corrected values
+could not be applied — the deadlock had to be broken by hand. Argo is not self-correcting when
+the thing it is waiting on is the thing that is wrong.
+
+**The GPU was never the problem.** ADR 0006 predicted trouble from running datacentre GPU
+tooling on a consumer Pascal card. DCGM initialised cleanly every time and reports
+utilisation, VRAM, and temperature; the crash was an ordinary resource limit. The prediction
+was reasonable and simply wrong, which is worth leaving on the record.
+
 ## Explicitly out of scope
 
 Harbor, Zarf, secret management, backups, multi-node scheduling, scale-to-zero, and every
@@ -54,11 +76,12 @@ container from Phase 3 onward. Alerting is deferred with the rest of it.
 
 ## Done when
 
-- [ ] Editing `model.file` in the chart's values and merging redeploys the model, with no
-      `kubectl` involved
-- [ ] `kubectl -n argocd get applications` shows `root`, `llm`, and `observability` Synced
+- [x] Editing the chart's values and merging redeploys the model, with no `kubectl` involved —
+      raising the context window to 4096 reached the node about 30 seconds after merge
+- [x] `kubectl -n argocd get applications` shows `root`, `llm`, and `observability` Synced
       and Healthy
-- [ ] Deleting the `llm` Deployment by hand results in Argo CD putting it back
-- [ ] Grafana loads at `grafana.mnemos.local` with GPU utilisation and VRAM on screen
-- [ ] The [Phase 0 smoke test](../runbooks/phase-0-smoke-test.md) still returns a chat
+- [x] Deleting the `llm` Deployment by hand results in Argo CD putting it back — restored in
+      under 15 seconds
+- [x] Grafana loads at `grafana.mnemos.local` with GPU utilisation and VRAM on screen
+- [x] The [Phase 0 smoke test](../runbooks/phase-0-smoke-test.md) still returns a chat
       completion
