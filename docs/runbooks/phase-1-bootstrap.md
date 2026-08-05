@@ -100,29 +100,88 @@ the Prometheus, Grafana, and DCGM images and waits on a volume claim.
 ## 4. Reach the UIs from the Mac
 
 Traefik routes by hostname, so the workstation needs to resolve those names to the node.
-Find the node's address and add both hostnames to `/etc/hosts`:
+Find the node's address and add both hostnames to `/etc/hosts` (once per Mac):
 
 ```bash
+export KUBECONFIG=~/.kube/mnemos-laptop.yaml
 kubectl get nodes -o wide
 ```
 
-```text
-# /etc/hosts on the Mac — substitute the node's real address
-192.168.1.10  argocd.mnemos.local grafana.mnemos.local
+```bash
+# substitute the node's InternalIP if it is not 192.168.1.10
+sudo sh -c 'echo "192.168.1.10  argocd.mnemos.local grafana.mnemos.local" >> /etc/hosts'
 ```
 
-Fetch Argo CD's generated admin password:
+Use **http**, not https. TLS stops at Traefik; both UIs speak plain HTTP behind it.
+
+### Argo CD
+
+Username is always `admin`. The initial password is in a bootstrap secret:
 
 ```bash
+export KUBECONFIG=~/.kube/mnemos-laptop.yaml
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d; echo
 ```
 
-Open <http://argocd.mnemos.local> and log in as `admin`. Change the password, then delete the
-bootstrap secret:
+Open <http://argocd.mnemos.local>, log in, change the password in the UI, then delete the
+bootstrap secret so it cannot be used again:
 
 ```bash
 kubectl -n argocd delete secret argocd-initial-admin-secret
+```
+
+After that, the password you chose in the UI is the one you use. There is no kubectl command
+that prints it.
+
+### Grafana
+
+Username is always `admin`. The password lives in the `grafana-admin` secret (that name is
+the Kubernetes object, **not** the login username):
+
+```bash
+export KUBECONFIG=~/.kube/mnemos-laptop.yaml
+kubectl -n observability get secret grafana-admin \
+  -o jsonpath='{.data.admin-password}' | base64 -d; echo
+```
+
+To copy it without a trailing newline (avoids paste mistakes):
+
+```bash
+PASS=$(kubectl -n observability get secret grafana-admin \
+  -o jsonpath='{.data.admin-password}' | base64 -d)
+printf '%s' "$PASS" | pbcopy
+echo "copied password length: ${#PASS}"
+```
+
+Open <http://grafana.mnemos.local> and log in as `admin` with that password.
+
+If login still fails after the secret looks correct, Grafana may be using an older password
+stored in its database from first boot. Reset it to match the secret:
+
+```bash
+kubectl -n observability exec deploy/observability-grafana -c grafana -- \
+  grafana cli admin reset-admin-password "$(
+    kubectl -n observability get secret grafana-admin \
+      -o jsonpath='{.data.admin-password}' | base64 -d
+  )"
+```
+
+## Opening the UIs again later
+
+Once `/etc/hosts` is set, day-to-day access is:
+
+| UI | URL | Username | Password |
+| --- | --- | --- | --- |
+| Argo CD | <http://argocd.mnemos.local> | `admin` | whatever you set in the UI after first login |
+| Grafana | <http://grafana.mnemos.local> | `admin` | from the `grafana-admin` secret (commands above) |
+
+```bash
+export KUBECONFIG=~/.kube/mnemos-laptop.yaml
+
+# Grafana password (Argo's initial secret is deleted after first login)
+kubectl -n observability get secret grafana-admin \
+  -o jsonpath='{.data.admin-password}' | base64 -d; echo
 ```
 
 ## Done when
