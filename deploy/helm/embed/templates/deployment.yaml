@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "embed.fullname" . }}
+  labels:
+    {{- include "embed.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  # The weights cache is a ReadWriteOnce volume, so two pods cannot hold it at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "embed.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "embed.labels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.model.pullOnStart }}
+      # Pulling here rather than in the serving container means readiness on the
+      # Service is honest: once the pod is Ready the model is on disk.
+      initContainers:
+        - name: pull-model
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              # Every ollama subcommand is an API call, so the server has to be up
+              # even just to ask whether the model is already on disk.
+              /bin/ollama serve &
+              pid=$!
+              until /bin/ollama list >/dev/null 2>&1; do sleep 1; done
+              if /bin/ollama show "$OLLAMA_MODEL" >/dev/null 2>&1; then
+                echo "model $OLLAMA_MODEL already cached"
+              else
+                /bin/ollama pull "$OLLAMA_MODEL"
+              fi
+              kill "$pid"
+              wait "$pid" 2>/dev/null || true
+          env:
+            - name: OLLAMA_MODEL
+              value: {{ .Values.model.name | quote }}
+          volumeMounts:
+            - name: cache
+              mountPath: /root/.ollama
+      {{- end }}
+      containers:
+        - name: server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - serve
+          env:
+            # Default binding is loopback only, which the Service cannot reach.
+            - name: OLLAMA_HOST
+              value: "0.0.0.0:{{ .Values.service.port }}"
+            - name: OLLAMA_KEEP_ALIVE
+              value: {{ .Values.keepAlive | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          {{- if .Values.probes.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: cache
+              mountPath: /root/.ollama
+      volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: {{ include "embed.fullname" . }}-cache
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,57 @@
+# Ollama serves /v1/embeddings, so clients written against the OpenAI contract
+# work unchanged. Per ADR 0004 the runtime is swappable for the same reason the
+# llm chart is: a TEI or vLLM image serving the same endpoint is a values change.
+image:
+  repository: docker.io/ollama/ollama
+  tag: "0.32.6"
+  pullPolicy: IfNotPresent
+
+model:
+  name: nomic-embed-text
+  # 768 is this model's output width. MNEMOS_EMBED_DIM and EMBEDDING_DIM in the
+  # ingest chart must agree, and changing it invalidates existing Neo4j vectors.
+  dim: 768
+  # Pulls the weights on first start into the cache volume. Set false for an
+  # air-gapped node where the volume is seeded ahead of time.
+  pullOnStart: true
+
+service:
+  type: ClusterIP
+  port: 11434
+
+# No GPU on purpose: the node has one 4 GB card and the llm Deployment claims it.
+# A 137M-parameter embedding model is fast enough on CPU for batch ingest.
+persistence:
+  size: 5Gi
+  storageClassName: local-path
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
+
+# The server answers /api/tags as soon as it is listening. The model pull happens
+# in an init container, so being ready here really does mean ready to embed.
+probes:
+  enabled: true
+  path: /api/tags
+  startup:
+    periodSeconds: 5
+    failureThreshold: 24
+  liveness:
+    periodSeconds: 30
+    failureThreshold: 3
+  readiness:
+    periodSeconds: 10
+    failureThreshold: 3
+
+# Ingest runs every 30 minutes, so the default 5m idle unload would pay a model
+# load cost on every single run. Holding it resident costs a few hundred MB.
+keepAlive: 24h
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}

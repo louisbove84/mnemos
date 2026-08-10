@@ -12,35 +12,38 @@ graph LR
     subgraph 3 ["mnemos"]
       style 3 fill:#ffffff,stroke:#0b4884,color:#0b4884
 
-      10["<div style='font-weight: bold'>MCP Server</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Exposes memory as tools over<br />Model Context Protocol</div>"]
-      style 10 fill:#d8dcdf,stroke:#979a9c,color:#55606a
-      11["<div style='font-weight: bold'>Web UI</div><div style='font-size: 70%; margin-top: 0px'>[Container: React, TypeScript]</div><div style='font-size: 80%; margin-top:10px'>Chat, decision journal, and<br />timeline</div>"]
-      style 11 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      10["<div style='font-weight: bold'>Context Graph</div><div style='font-size: 70%; margin-top: 0px'>[Container: Neo4j]</div><div style='font-size: 80%; margin-top:10px'>Bi-temporal knowledge graph<br />with hybrid retrieval</div>"]
+      style 10 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      11["<div style='font-weight: bold'>MCP Server</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Exposes memory as tools over<br />Model Context Protocol</div>"]
+      style 11 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      12["<div style='font-weight: bold'>Web UI</div><div style='font-size: 70%; margin-top: 0px'>[Container: React, TypeScript]</div><div style='font-size: 80%; margin-top:10px'>Chat, decision journal, and<br />timeline</div>"]
+      style 12 fill:#d8dcdf,stroke:#979a9c,color:#55606a
       4["<div style='font-weight: bold'>Model Serving</div><div style='font-size: 70%; margin-top: 0px'>[Container: OpenAI-compatible HTTP, llama.cpp]</div><div style='font-size: 80%; margin-top:10px'>Local LLM inference for<br />extraction and synthesis</div>"]
       style 4 fill:#438dd5,stroke:#2e6295,color:#ffffff
-      5["<div style='font-weight: bold'>Object Store</div><div style='font-size: 70%; margin-top: 0px'>[Container: MinIO]</div><div style='font-size: 80%; margin-top:10px'>Raw exports, bundles, and<br />model artifacts</div>"]
+      5["<div style='font-weight: bold'>Object Store</div><div style='font-size: 70%; margin-top: 0px'>[Container: MinIO]</div><div style='font-size: 80%; margin-top:10px'>S3-compatible artifact store<br />for multi-writer and air-gap<br />bundles</div>"]
       style 5 fill:#d8dcdf,stroke:#979a9c,color:#55606a
-      6["<div style='font-weight: bold'>Ingestion Pipeline</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python, Spark]</div><div style='font-size: 80%; margin-top:10px'>Parses transcripts and<br />exports into timestamped<br />episodes</div>"]
-      style 6 fill:#d8dcdf,stroke:#979a9c,color:#55606a
-      7["<div style='font-weight: bold'>Transcript Archive</div><div style='font-size: 70%; margin-top: 0px'>[Container: PostgreSQL]</div><div style='font-size: 80%; margin-top:10px'>Immutable verbatim source of<br />truth</div>"]
-      style 7 fill:#d8dcdf,stroke:#979a9c,color:#55606a
-      8["<div style='font-weight: bold'>Extraction Service</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python, Graphiti]</div><div style='font-size: 80%; margin-top:10px'>Turns episodes into temporal<br />facts and resolves<br />contradictions</div>"]
-      style 8 fill:#d8dcdf,stroke:#979a9c,color:#55606a
-      9["<div style='font-weight: bold'>Context Graph</div><div style='font-size: 70%; margin-top: 0px'>[Container: Neo4j]</div><div style='font-size: 80%; margin-top:10px'>Bi-temporal knowledge graph<br />with hybrid retrieval</div>"]
-      style 9 fill:#d8dcdf,stroke:#979a9c,color:#55606a
+      6["<div style='font-weight: bold'>Export Inbox</div><div style='font-size: 70%; margin-top: 0px'>[Container: hostPath /srv/mnemos/data]</div><div style='font-size: 80%; margin-top:10px'>Provider export landing zone<br />on node disk</div>"]
+      style 6 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      7["<div style='font-weight: bold'>Ingestion Pipeline</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Parses provider exports into<br />timestamped episodes</div>"]
+      style 7 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      8["<div style='font-weight: bold'>Transcript Archive</div><div style='font-size: 70%; margin-top: 0px'>[Container: PostgreSQL]</div><div style='font-size: 80%; margin-top:10px'>Immutable verbatim source of<br />truth</div>"]
+      style 8 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+      9["<div style='font-weight: bold'>Extraction Service</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python, Graphiti]</div><div style='font-size: 80%; margin-top:10px'>Turns episodes into temporal<br />facts and resolves<br />contradictions</div>"]
+      style 9 fill:#e08e0b,stroke:#9c6307,color:#ffffff
     end
 
     1-. "<div>Converses with</div><div style='font-size: 70%'></div>" .->2
-    1-. "<div>Reviews decisions and history<br />in</div><div style='font-size: 70%'></div>" .->11
-    2-. "<div>Reads and writes memory via<br />MCP</div><div style='font-size: 70%'></div>" .->10
-    11-. "<div>Queries memory via</div><div style='font-size: 70%'></div>" .->10
-    10-. "<div>Hybrid retrieval from</div><div style='font-size: 70%'></div>" .->9
-    10-. "<div>Fetches verbatim excerpts<br />from</div><div style='font-size: 70%'></div>" .->7
-    10-. "<div>Synthesises answers using</div><div style='font-size: 70%'></div>" .->4
-    6-. "<div>Stores raw exports in</div><div style='font-size: 70%'></div>" .->5
-    6-. "<div>Writes transcripts to</div><div style='font-size: 70%'></div>" .->7
-    6-. "<div>Emits episodes to</div><div style='font-size: 70%'></div>" .->8
-    8-. "<div>Extracts entities and facts<br />using</div><div style='font-size: 70%'></div>" .->4
-    8-. "<div>Writes temporal facts to</div><div style='font-size: 70%'></div>" .->9
+    1-. "<div>Reviews decisions and history<br />in</div><div style='font-size: 70%'></div>" .->12
+    2-. "<div>Reads and writes memory via<br />MCP</div><div style='font-size: 70%'></div>" .->11
+    12-. "<div>Queries memory via</div><div style='font-size: 70%'></div>" .->11
+    11-. "<div>Hybrid retrieval from</div><div style='font-size: 70%'></div>" .->10
+    11-. "<div>Fetches verbatim excerpts<br />from</div><div style='font-size: 70%'></div>" .->8
+    11-. "<div>Synthesises answers using</div><div style='font-size: 70%'></div>" .->4
+    7-. "<div>Reads raw exports from</div><div style='font-size: 70%'></div>" .->6
+    7-. "<div>Will store raw exports in<br />(deferred)</div><div style='font-size: 70%'></div>" .->5
+    7-. "<div>Writes transcripts to</div><div style='font-size: 70%'></div>" .->8
+    7-. "<div>Emits episodes to</div><div style='font-size: 70%'></div>" .->9
+    9-. "<div>Extracts entities and facts<br />using</div><div style='font-size: 70%'></div>" .->4
+    9-. "<div>Writes temporal facts to</div><div style='font-size: 70%'></div>" .->10
 
   end

@@ -4,36 +4,55 @@ graph LR
   subgraph diagram ["Deployment View: mnemos - Homelab"]
     style diagram fill:#ffffff,stroke:#ffffff
 
-    subgraph 26 ["Mac workstation"]
-      style 26 fill:#ffffff,stroke:#444444,color:#444444
-
-      27["<div style='font-weight: bold'>kubectl, helm, browser</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: CLI]</div><div style='font-size: 80%; margin-top:10px'>Bootstraps the cluster once,<br />then reads it</div>"]
-      style 27 fill:#ffffff,stroke:#444444,color:#444444
-    end
-
-    subgraph 28 ["GPU laptop"]
+    subgraph 28 ["Mac workstation"]
       style 28 fill:#ffffff,stroke:#444444,color:#444444
 
-      29["<div style='font-weight: bold'>Traefik</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: Ingress, bundled with k3s]</div><div style='font-size: 80%; margin-top:10px'>Routes hostnames to services</div>"]
+      29["<div style='font-weight: bold'>kubectl, helm, browser</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: CLI]</div><div style='font-size: 80%; margin-top:10px'>Bootstraps the cluster once,<br />then reads it</div>"]
       style 29 fill:#ffffff,stroke:#444444,color:#444444
-      30["<div style='font-weight: bold'>Argo CD</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: GitOps]</div><div style='font-size: 80%; margin-top:10px'>Reconciles the cluster<br />against the git repository</div>"]
-      style 30 fill:#ffffff,stroke:#444444,color:#444444
-      31["<div style='font-weight: bold'>Prometheus and Grafana</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: kube-prometheus-stack]</div><div style='font-size: 80%; margin-top:10px'>Collects and displays cluster<br />and GPU metrics</div>"]
-      style 31 fill:#ffffff,stroke:#444444,color:#444444
-      subgraph 32 ["namespace: mnemos"]
-        style 32 fill:#ffffff,stroke:#444444,color:#444444
+    end
 
-        33["<div style='font-weight: bold'>Model Serving</div><div style='font-size: 70%; margin-top: 0px'>[Container: OpenAI-compatible HTTP, llama.cpp]</div><div style='font-size: 80%; margin-top:10px'>Local LLM inference for<br />extraction and synthesis</div>"]
-        style 33 fill:#438dd5,stroke:#2e6295,color:#ffffff
+    subgraph 30 ["GPU laptop"]
+      style 30 fill:#ffffff,stroke:#444444,color:#444444
+
+      31["<div style='font-weight: bold'>Traefik</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: Ingress, bundled with k3s]</div><div style='font-size: 80%; margin-top:10px'>Routes hostnames to services</div>"]
+      style 31 fill:#ffffff,stroke:#444444,color:#444444
+      32["<div style='font-weight: bold'>Argo CD</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: GitOps]</div><div style='font-size: 80%; margin-top:10px'>Reconciles the cluster<br />against the git repository</div>"]
+      style 32 fill:#ffffff,stroke:#444444,color:#444444
+      33["<div style='font-weight: bold'>Prometheus and Grafana</div><div style='font-size: 70%; margin-top: 0px'>[Infrastructure Node: kube-prometheus-stack]</div><div style='font-size: 80%; margin-top:10px'>Collects and displays cluster<br />and GPU metrics</div>"]
+      style 33 fill:#ffffff,stroke:#444444,color:#444444
+      subgraph 34 ["namespace: mnemos"]
+        style 34 fill:#ffffff,stroke:#444444,color:#444444
+
+        35["<div style='font-weight: bold'>Model Serving</div><div style='font-size: 70%; margin-top: 0px'>[Container: OpenAI-compatible HTTP, llama.cpp]</div><div style='font-size: 80%; margin-top:10px'>Local LLM inference for<br />extraction and synthesis</div>"]
+        style 35 fill:#438dd5,stroke:#2e6295,color:#ffffff
+        36["<div style='font-weight: bold'>Transcript Archive</div><div style='font-size: 70%; margin-top: 0px'>[Container: PostgreSQL]</div><div style='font-size: 80%; margin-top:10px'>Immutable verbatim source of<br />truth</div>"]
+        style 36 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+        37["<div style='font-weight: bold'>Context Graph</div><div style='font-size: 70%; margin-top: 0px'>[Container: Neo4j]</div><div style='font-size: 80%; margin-top:10px'>Bi-temporal knowledge graph<br />with hybrid retrieval</div>"]
+        style 37 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+        38["<div style='font-weight: bold'>Ingestion Pipeline</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Parses provider exports into<br />timestamped episodes</div>"]
+        style 38 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+        40["<div style='font-weight: bold'>MCP Server</div><div style='font-size: 70%; margin-top: 0px'>[Container: Python]</div><div style='font-size: 80%; margin-top:10px'>Exposes memory as tools over<br />Model Context Protocol</div>"]
+        style 40 fill:#e08e0b,stroke:#9c6307,color:#ffffff
+        44["<div style='font-weight: bold'>Export Inbox</div><div style='font-size: 70%; margin-top: 0px'>[Container: hostPath /srv/mnemos/data]</div><div style='font-size: 80%; margin-top:10px'>Provider export landing zone<br />on node disk</div>"]
+        style 44 fill:#e08e0b,stroke:#9c6307,color:#ffffff
       end
 
     end
 
-    27-. "<div>Bootstraps, then observes</div><div style='font-size: 70%'></div>" .->30
-    27-. "<div>Reaches the UIs through</div><div style='font-size: 70%'></div>" .->29
-    29-. "<div>Routes argocd.mnemos.local to</div><div style='font-size: 70%'></div>" .->30
-    29-. "<div>Routes grafana.mnemos.local<br />to</div><div style='font-size: 70%'></div>" .->31
-    30-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->33
-    31-. "<div>Scrapes metrics from</div><div style='font-size: 70%'></div>" .->33
+    38-. "<div>Writes transcripts to</div><div style='font-size: 70%'></div>" .->36
+    40-. "<div>Synthesises answers using</div><div style='font-size: 70%'></div>" .->35
+    40-. "<div>Fetches verbatim excerpts<br />from</div><div style='font-size: 70%'></div>" .->36
+    40-. "<div>Hybrid retrieval from</div><div style='font-size: 70%'></div>" .->37
+    38-. "<div>Reads raw exports from</div><div style='font-size: 70%'></div>" .->44
+    29-. "<div>Bootstraps, then observes</div><div style='font-size: 70%'></div>" .->32
+    29-. "<div>Reaches the UIs through</div><div style='font-size: 70%'></div>" .->31
+    31-. "<div>Routes argocd.mnemos.local to</div><div style='font-size: 70%'></div>" .->32
+    31-. "<div>Routes grafana.mnemos.local<br />to</div><div style='font-size: 70%'></div>" .->33
+    32-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->35
+    32-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->36
+    32-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->37
+    32-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->38
+    32-. "<div>Deploys and self-heals</div><div style='font-size: 70%'></div>" .->40
+    33-. "<div>Scrapes metrics from</div><div style='font-size: 70%'></div>" .->35
 
   end

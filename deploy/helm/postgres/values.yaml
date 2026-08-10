@@ -1,0 +1,26 @@
+image:
+  repository: docker.io/library/postgres
+  tag: "16.4"
+  pullPolicy: IfNotPresent
+
+auth:
+  # Created out of band — see the Phase 3–4 runbook. Same Grafana lesson:
+  # random chart passwords cannot be reconciled by Argo.
+  existingSecret: postgres-auth
+  usernameKey: username
+  passwordKey: password
+  databaseKey: database
+
+service:
+  port: 5432
+
+persistence:
+  size: 5Gi
+  storageClassName: local-path
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi

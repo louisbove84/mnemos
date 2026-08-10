@@ -1,0 +1,95 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ingest.fullname" . }}
+  labels:
+    {{- include "ingest.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.backoffLimit }}
+      ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+      template:
+        metadata:
+          labels:
+            {{- include "ingest.labels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ingest
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -euo pipefail
+                  export MNEMOS_POSTGRES_DSN="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@{{ .Values.postgres.host }}:{{ .Values.postgres.port }}/${POSTGRES_DB}"
+                  export MNEMOS_NEO4J_PASSWORD="${NEO4J_AUTH#*/}"
+                  exec mnemos-ingest
+              env:
+                - name: MNEMOS_INBOX_DIR
+                  value: /data/{{ .Values.data.inboxSubPath }}
+                - name: MNEMOS_PROCESSED_DIR
+                  value: /data/{{ .Values.data.processedSubPath }}
+                - name: MNEMOS_LLM_BASE_URL
+                  value: {{ .Values.llm.baseUrl | quote }}
+                - name: MNEMOS_LLM_API_KEY
+                  value: {{ .Values.llm.apiKey | quote }}
+                - name: MNEMOS_LLM_MODEL
+                  value: {{ .Values.llm.model | quote }}
+                - name: MNEMOS_NEO4J_URI
+                  value: {{ .Values.neo4j.uri | quote }}
+                - name: MNEMOS_NEO4J_USER
+                  value: {{ .Values.neo4j.user | quote }}
+                - name: MNEMOS_EXTRACT_ENABLED
+                  value: {{ .Values.extract.enabled | quote }}
+                - name: MNEMOS_MAX_EPISODES_PER_RUN
+                  value: {{ .Values.extract.maxEpisodesPerRun | quote }}
+                - name: MNEMOS_EMBEDDER
+                  value: {{ .Values.embed.mode | quote }}
+                - name: MNEMOS_EMBED_BASE_URL
+                  value: {{ .Values.embed.baseUrl | quote }}
+                - name: MNEMOS_EMBED_API_KEY
+                  value: {{ .Values.embed.apiKey | quote }}
+                - name: MNEMOS_EMBED_MODEL
+                  value: {{ .Values.embed.model | quote }}
+                - name: MNEMOS_EMBED_DIM
+                  value: {{ .Values.embed.dim | quote }}
+                # Graphiti sizes its own vector indices from this, not from our settings.
+                - name: EMBEDDING_DIM
+                  value: {{ .Values.embed.dim | quote }}
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgres.existingSecret }}
+                      key: {{ .Values.postgres.usernameKey }}
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgres.existingSecret }}
+                      key: {{ .Values.postgres.passwordKey }}
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgres.existingSecret }}
+                      key: {{ .Values.postgres.databaseKey }}
+                - name: NEO4J_AUTH
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.neo4j.existingSecret }}
+                      key: {{ .Values.neo4j.authKey }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+          volumes:
+            - name: data
+              hostPath:
+                path: {{ .Values.data.hostPath }}
+                type: Directory

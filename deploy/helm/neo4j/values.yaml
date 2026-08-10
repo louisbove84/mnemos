@@ -1,0 +1,30 @@
+image:
+  repository: docker.io/library/neo4j
+  tag: "5.26.0-community"
+  pullPolicy: IfNotPresent
+
+auth:
+  existingSecret: neo4j-auth
+  # Neo4j expects NEO4J_AUTH=username/password as a single value.
+  authKey: auth
+
+service:
+  boltPort: 7687
+  httpPort: 7474
+
+persistence:
+  size: 5Gi
+  storageClassName: local-path
+
+# Keep the heap small; this node also runs the model and observability.
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+config:
+  heapInitial: 256m
+  heapMax: 512m
+  pageCache: 64m

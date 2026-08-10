@@ -1,0 +1,20 @@
+{{/*
+Downloaded weights outlive the pod. Without this every restart re-pulls the model,
+which on a home link is minutes of downtime for the ingest CronJob.
+*/}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "embed.fullname" . }}-cache
+  labels:
+    {{- include "embed.labels" . | nindent 4 }}
+  annotations:
+    # Keep the cache if the release is uninstalled; deleting it only costs a re-pull,
+    # but Argo pruning it mid-reconcile would stall ingest.
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ .Values.persistence.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
