@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mnemos"
-version = "0.0.1"
+version = "0.1.0"
 description = "Air-gappable, provider-neutral long-term memory for AI conversations"
 authors = ["Louis Bove <louisbove84@users.noreply.github.com>"]
 license = "Apache-2.0"
@@ -9,12 +9,26 @@ packages = [{ include = "mnemos", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+asyncpg = "^0.31.0"
+pydantic = "^2.10"
+pydantic-settings = "^2.7"
+httpx = "^0.28.0"
+neo4j = "^5.27.0"
+mcp = "^1.9.0"
+openai = "^1.60.0"
+# Graphiti pulls the temporal graph write path; pinned for reproducible images.
+graphiti-core = "^0.29.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
+pytest-asyncio = "^0.25"
 pytest-cov = "^6.0"
 ruff = "^0.8"
 mypy = "^1.13"
+
+[tool.poetry.scripts]
+mnemos-ingest = "mnemos.ingest.cli:main"
+mnemos-mcp = "mnemos.mcp.server:main"
 
 [build-system]
 requires = ["poetry-core"]
@@ -31,8 +45,15 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 files = ["src", "tests"]
+exclude = ["tests/fixtures/"]
+
+[[tool.mypy.overrides]]
+module = ["graphiti_core.*", "neo4j.*", "asyncpg.*", "mcp.*"]
+ignore_missing_imports = true

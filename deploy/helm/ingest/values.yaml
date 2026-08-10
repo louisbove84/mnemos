@@ -1,0 +1,61 @@
+image:
+  # Built from the repo root Dockerfile and imported into k3s (see runbook).
+  repository: mnemos
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# CronJob by default; set schedule to "" and use a one-shot Job via Argo hook
+# or kubectl create job --from=cronjob/ingest for on-demand runs.
+schedule: "*/30 * * * *"
+successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 3
+concurrencyPolicy: Forbid
+backoffLimit: 1
+ttlSecondsAfterFinished: 86400
+
+data:
+  hostPath: /srv/mnemos/data
+  inboxSubPath: inbox
+  processedSubPath: processed
+
+postgres:
+  existingSecret: postgres-auth
+  host: postgres
+  port: 5432
+  usernameKey: username
+  passwordKey: password
+  databaseKey: database
+
+neo4j:
+  existingSecret: neo4j-auth
+  uri: bolt://neo4j:7687
+  user: neo4j
+  # Secret value is "neo4j/password"; ingest parses the password side.
+  authKey: auth
+
+llm:
+  baseUrl: http://llm:8000/v1
+  apiKey: not-needed
+  model: /models/qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
+
+embed:
+  # "hash" falls back to a deterministic non-semantic embedder, which keeps ingest
+  # running when embed is down but makes graph search results meaningless.
+  mode: openai_compatible
+  baseUrl: http://embed:11434/v1
+  apiKey: not-needed
+  model: nomic-embed-text
+  # Must match deploy/helm/embed model.dim. Changing it after an ingest run means
+  # re-ingesting, since old and new vectors are not comparable.
+  dim: 768
+
+extract:
+  enabled: true
+  maxEpisodesPerRun: 20
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    memory: 1Gi

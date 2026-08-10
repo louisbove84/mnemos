@@ -1,0 +1,78 @@
+[
+  {
+    "id": "conv-fixture-aurora",
+    "title": "Planning a weekend hike near Aurora",
+    "create_time": 1717200000.0,
+    "update_time": 1717203600.0,
+    "mapping": {
+      "client-created-root": {
+        "id": "client-created-root",
+        "message": null,
+        "parent": null,
+        "children": ["msg-user-1"]
+      },
+      "msg-user-1": {
+        "id": "msg-user-1",
+        "message": {
+          "id": "msg-user-1",
+          "author": { "role": "user" },
+          "create_time": 1717200000.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "I want to hike near Aurora this Saturday. Suggest a moderate trail and what to pack."
+            ]
+          }
+        },
+        "parent": "client-created-root",
+        "children": ["msg-assistant-1"]
+      },
+      "msg-assistant-1": {
+        "id": "msg-assistant-1",
+        "message": {
+          "id": "msg-assistant-1",
+          "author": { "role": "assistant" },
+          "create_time": 1717200060.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Try the Cedar Ridge Loop near Aurora. Pack water, a rain shell, and trail snacks. The overlook has the best view after mile two."
+            ]
+          }
+        },
+        "parent": "msg-user-1",
+        "children": ["msg-user-2"]
+      },
+      "msg-user-2": {
+        "id": "msg-user-2",
+        "message": {
+          "id": "msg-user-2",
+          "author": { "role": "user" },
+          "create_time": 1717201000.0,
+          "content": {
+            "content_type": "text",
+            "parts": ["Great. Also remember my dog's name is Nimbus."]
+          }
+        },
+        "parent": "msg-assistant-1",
+        "children": ["msg-assistant-2"]
+      },
+      "msg-assistant-2": {
+        "id": "msg-assistant-2",
+        "message": {
+          "id": "msg-assistant-2",
+          "author": { "role": "assistant" },
+          "create_time": 1717201060.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Got it — Nimbus can join on leash. Cedar Ridge Loop allows dogs on weekdays and Saturdays."
+            ]
+          }
+        },
+        "parent": "msg-user-2",
+        "children": []
+      }
+    }
+  }
+]

@@ -12,23 +12,26 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
             serving = container "Model Serving" "Local LLM inference for extraction and synthesis" "OpenAI-compatible HTTP, llama.cpp" {
                 tags "Phase 0"
             }
-            lake = container "Object Store" "Raw exports, bundles, and model artifacts" "MinIO" {
+            lake = container "Object Store" "S3-compatible artifact store for multi-writer and air-gap bundles" "MinIO" {
                 tags "Phase 3" "Not Built"
             }
-            ingest = container "Ingestion Pipeline" "Parses transcripts and exports into timestamped episodes" "Python, Spark" {
-                tags "Phase 3" "Not Built"
+            inbox = container "Export Inbox" "Provider export landing zone on node disk" "hostPath /srv/mnemos/data" {
+                tags "Phase 3" "In Progress"
+            }
+            ingest = container "Ingestion Pipeline" "Parses provider exports into timestamped episodes" "Python" {
+                tags "Phase 3" "In Progress"
             }
             archive = container "Transcript Archive" "Immutable verbatim source of truth" "PostgreSQL" {
-                tags "Phase 4" "Not Built"
+                tags "Phase 4" "In Progress"
             }
             extract = container "Extraction Service" "Turns episodes into temporal facts and resolves contradictions" "Python, Graphiti" {
-                tags "Phase 4" "Not Built"
+                tags "Phase 4" "In Progress"
             }
             graph = container "Context Graph" "Bi-temporal knowledge graph with hybrid retrieval" "Neo4j" {
-                tags "Phase 4" "Not Built"
+                tags "Phase 4" "In Progress"
             }
             mcp = container "MCP Server" "Exposes memory as tools over Model Context Protocol" "Python" {
-                tags "Phase 4" "Not Built"
+                tags "Phase 4" "In Progress"
             }
             ui = container "Web UI" "Chat, decision journal, and timeline" "React, TypeScript" {
                 tags "Phase 5" "Not Built"
@@ -42,7 +45,8 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
         mcp -> graph "Hybrid retrieval from"
         mcp -> archive "Fetches verbatim excerpts from"
         mcp -> serving "Synthesises answers using"
-        ingest -> lake "Stores raw exports in"
+        ingest -> inbox "Reads raw exports from"
+        ingest -> lake "Will store raw exports in (deferred)"
         ingest -> archive "Writes transcripts to"
         ingest -> extract "Emits episodes to"
         extract -> serving "Extracts entities and facts using"
@@ -60,6 +64,11 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
 
                 deploymentNode "namespace: mnemos" {
                     servingInstance = containerInstance serving
+                    archiveInstance = containerInstance archive
+                    graphInstance = containerInstance graph
+                    ingestInstance = containerInstance ingest
+                    mcpInstance = containerInstance mcp
+                    inboxInstance = containerInstance inbox
                 }
             }
         }
@@ -69,6 +78,10 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
         traefik -> argocd "Routes argocd.mnemos.local to"
         traefik -> prometheus "Routes grafana.mnemos.local to"
         argocd -> servingInstance "Deploys and self-heals"
+        argocd -> archiveInstance "Deploys and self-heals"
+        argocd -> graphInstance "Deploys and self-heals"
+        argocd -> ingestInstance "Deploys and self-heals"
+        argocd -> mcpInstance "Deploys and self-heals"
         prometheus -> servingInstance "Scrapes metrics from"
     }
 
@@ -80,7 +93,7 @@ workspace "mnemos" "Air-gappable, provider-neutral long-term memory for AI conve
         }
 
         container mnemos "Containers_Current" {
-            include serving
+            include serving inbox ingest archive extract graph mcp
             autolayout lr
             description "Built or actively being built today. See README for phase status."
         }

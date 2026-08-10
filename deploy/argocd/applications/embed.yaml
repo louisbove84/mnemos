@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: embed
+  namespace: argocd
+  annotations:
+    # Ingest (wave 1) cannot extract without embeddings, so this lands with the
+    # other stateful backends first.
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/louisbove84/mnemos.git
+    targetRevision: main
+    path: deploy/helm/embed
+    helm:
+      # Fixes the release name so the Service stays "embed", which is what
+      # MNEMOS_EMBED_BASE_URL in the ingest chart resolves.
+      releaseName: embed
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mnemos
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

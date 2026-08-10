@@ -15,5 +15,7 @@ see what was believed at the time is more valuable than a tidy current-state doc
 | [0004](0004-openai-compatible-serving.md) | OpenAI-compatible HTTP as the serving interface | Accepted |
 | [0005](0005-gitops-with-argo-cd.md) | GitOps with Argo CD in an App-of-Apps layout | Accepted |
 | [0006](0006-observability-stack.md) | kube-prometheus-stack for platform observability | Accepted |
+| [0007](0007-hostpath-inbox-over-minio.md) | HostPath inbox over MinIO for the MVP landing zone | Accepted |
+| [0008](0008-local-embeddings-service.md) | A dedicated CPU embeddings service over the hash stand-in | Accepted |
 
 Copy [`template.md`](template.md) and take the next number.

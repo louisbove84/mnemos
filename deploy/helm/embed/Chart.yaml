@@ -1,0 +1,9 @@
+apiVersion: v2
+name: embed
+description: OpenAI-compatible text embeddings on CPU
+type: application
+version: 0.1.0
+appVersion: "0.32.6"
+keywords:
+  - embeddings
+  - openai-compatible
