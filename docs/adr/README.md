@@ -17,5 +17,6 @@ see what was believed at the time is more valuable than a tidy current-state doc
 | [0006](0006-observability-stack.md) | kube-prometheus-stack for platform observability | Accepted |
 | [0007](0007-hostpath-inbox-over-minio.md) | HostPath inbox over MinIO for the MVP landing zone | Accepted |
 | [0008](0008-local-embeddings-service.md) | A dedicated CPU embeddings service over the hash stand-in | Accepted |
+| [0009](0009-measured-reranking.md) | Rerank with the local LLM, chosen by measurement | Accepted |
 
 Copy [`template.md`](template.md) and take the next number.

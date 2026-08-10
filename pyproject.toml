@@ -18,6 +18,12 @@ mcp = "^1.9.0"
 openai = "^1.60.0"
 # Graphiti pulls the temporal graph write path; pinned for reproducible images.
 graphiti-core = "^0.29.0"
+# Only for the "bge" reranker. Optional because it drags in torch and downloads model
+# weights at runtime, which the default ingest image has no reason to carry.
+sentence-transformers = { version = "^5.7", optional = true }
+
+[tool.poetry.extras]
+bge = ["sentence-transformers"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
@@ -29,6 +35,7 @@ mypy = "^1.13"
 [tool.poetry.scripts]
 mnemos-ingest = "mnemos.ingest.cli:main"
 mnemos-mcp = "mnemos.mcp.server:main"
+mnemos-eval = "mnemos.eval.cli:main"
 
 [build-system]
 requires = ["poetry-core"]

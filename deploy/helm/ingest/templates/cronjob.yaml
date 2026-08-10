@@ -63,6 +63,10 @@ spec:
                 # Graphiti sizes its own vector indices from this, not from our settings.
                 - name: EMBEDDING_DIM
                   value: {{ .Values.embed.dim | quote }}
+                - name: MNEMOS_RERANKER
+                  value: {{ .Values.rerank.mode | quote }}
+                - name: MNEMOS_RERANK_CONCURRENCY
+                  value: {{ .Values.rerank.concurrency | quote }}
                 - name: POSTGRES_USER
                   valueFrom:
                     secretKeyRef:
