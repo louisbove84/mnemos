@@ -38,6 +38,28 @@ spec:
               value: {{ .Values.neo4j.uri | quote }}
             - name: MNEMOS_NEO4J_USER
               value: {{ .Values.neo4j.user | quote }}
+            - name: MNEMOS_LLM_BASE_URL
+              value: {{ .Values.llm.baseUrl | quote }}
+            - name: MNEMOS_LLM_API_KEY
+              value: {{ .Values.llm.apiKey | quote }}
+            - name: MNEMOS_LLM_MODEL
+              value: {{ .Values.llm.model | quote }}
+            - name: MNEMOS_EMBEDDER
+              value: {{ .Values.embed.mode | quote }}
+            - name: MNEMOS_EMBED_BASE_URL
+              value: {{ .Values.embed.baseUrl | quote }}
+            - name: MNEMOS_EMBED_API_KEY
+              value: {{ .Values.embed.apiKey | quote }}
+            - name: MNEMOS_EMBED_MODEL
+              value: {{ .Values.embed.model | quote }}
+            - name: MNEMOS_EMBED_DIM
+              value: {{ .Values.embed.dim | quote }}
+            - name: EMBEDDING_DIM
+              value: {{ .Values.embed.dim | quote }}
+            - name: MNEMOS_RERANKER
+              value: {{ .Values.rerank.mode | quote }}
+            - name: MNEMOS_RERANK_CONCURRENCY
+              value: {{ .Values.rerank.concurrency | quote }}
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:

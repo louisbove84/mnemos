@@ -22,12 +22,31 @@ neo4j:
   user: neo4j
   authKey: auth
 
+# Same contract as ingest: recall goes through Graphiti's hybrid search, which needs the
+# embedder to shortlist and the reranker to reorder. "lexical" on MCP only is the lever if
+# interactive recall contends with ingest for the GPU.
+llm:
+  baseUrl: http://llm:8000/v1
+  apiKey: not-needed
+  model: /models/qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
+
+embed:
+  mode: openai_compatible
+  baseUrl: http://embed:11434/v1
+  apiKey: not-needed
+  model: nomic-embed-text
+  dim: 768
+
+rerank:
+  mode: llm
+  concurrency: 4
+
 resources:
   requests:
     cpu: 50m
-    memory: 128Mi
+    memory: 256Mi
   limits:
-    memory: 512Mi
+    memory: 1Gi
 
 probes:
   enabled: true

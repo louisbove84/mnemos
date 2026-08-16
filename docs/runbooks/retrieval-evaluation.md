@@ -26,9 +26,9 @@ cannot score well and anything that does is matching meaning.
   seven are answerable from topic alone.
 
 **What this does not measure yet.** Ingest uses the embedder for entity dedup but not the
-reranker. MCP `recall_memory` uses Neo4j fulltext and Postgres keyword search, not Graphiti's
-hybrid search at all. The harness scores the path Graphiti's `search_` API would take once
-recall is wired through it ([ADR 0009](../adr/0009-measured-reranking.md)).
+reranker. MCP `recall_memory` uses Graphiti hybrid search (embedder + reranker) with a
+Postgres verbatim pad when the graph is thin ([ADR 0010](../adr/0010-recall-through-graphiti-search.md)).
+The harness scores that Graphiti path in isolation.
 
 ## Running it
 

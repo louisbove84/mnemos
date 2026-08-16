@@ -32,7 +32,10 @@ exports land on the node at `/srv/mnemos/data/inbox` ([ADR 0007](../docs/adr/000
 End-to-end smoke test: [`docs/runbooks/phase-3-4-memory-mvp.md`](../docs/runbooks/phase-3-4-memory-mvp.md).
 
 Reranking reuses the `llm` Service rather than adding a component, set by `rerank.mode` in
-[`helm/ingest/values.yaml`](helm/ingest/values.yaml) ([ADR 0009](../docs/adr/0009-measured-reranking.md)).
+[`helm/ingest/values.yaml`](helm/ingest/values.yaml) and
+[`helm/mcp/values.yaml`](helm/mcp/values.yaml)
+([ADR 0009](../docs/adr/0009-measured-reranking.md),
+[ADR 0010](../docs/adr/0010-recall-through-graphiti-search.md)).
 Retrieval quality is measurable rather than assumed: see
 [`docs/runbooks/retrieval-evaluation.md`](../docs/runbooks/retrieval-evaluation.md).
 
