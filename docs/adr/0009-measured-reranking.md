@@ -93,7 +93,7 @@ index and falls back to a Postgres `ILIKE`. No embedder, no reranker, no hybrid 
 The eval harness is therefore measuring the path Graphiti's `search_` API would take
 (embeddings to shortlist, reranker to reorder), not what ingest or recall currently
 do. Routing `recall_memory` through Graphiti's hybrid search is what makes these
-numbers describe what a user experiences, and is the next change.
+numbers describe what a user experiences: see [ADR 0010](0010-recall-through-graphiti-search.md).
 
 ## Alternatives considered
 
