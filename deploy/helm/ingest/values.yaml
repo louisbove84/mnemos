@@ -49,6 +49,15 @@ embed:
   # re-ingesting, since old and new vectors are not comparable.
   dim: 768
 
+# Reorders Graphiti's search hits during extraction, which is what entity dedup keys off.
+# Measured on the eval harness (docs/adr/0009): "llm" and "bge" both beat raw embedding
+# order, "lexical" scores slightly below it and is only a fallback for when llm is down.
+rerank:
+  mode: llm
+  # Fan-out per shortlist. This contends with extraction for the same single GPU, so
+  # raising it makes ingest slower rather than faster.
+  concurrency: 4
+
 extract:
   enabled: true
   maxEpisodesPerRun: 20

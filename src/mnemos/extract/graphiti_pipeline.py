@@ -15,7 +15,7 @@ from graphiti_core.nodes import EpisodeType
 from mnemos.archive.store import message_to_episode_text
 from mnemos.config import Settings
 from mnemos.extract.embedder import build_embedder
-from mnemos.extract.reranker import LexicalReranker
+from mnemos.extract.reranker import build_reranker
 from mnemos.ingest.models import Conversation
 
 log = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ async def build_graphiti(settings: Settings) -> Graphiti:
         settings.neo4j_password,
         llm_client=llm_client,
         embedder=build_embedder(settings),
-        cross_encoder=LexicalReranker(),
+        cross_encoder=build_reranker(settings),
     )
     await graphiti.build_indices_and_constraints()
     return graphiti

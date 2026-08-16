@@ -35,6 +35,14 @@ class Settings(BaseSettings):
     # it invalidates every vector already written to Neo4j.
     embed_dim: int = 768
 
+    # Reranks Graphiti's search hits. "llm" reuses the llm Service, so it costs no extra
+    # infrastructure; "bge" is a stronger purpose-built cross-encoder that needs the
+    # sentence-transformers extra; "lexical" needs nothing and is the offline fallback.
+    reranker: Literal["llm", "bge", "lexical"] = "llm"
+    # Concurrent rerank calls. One shortlist fans out this wide against a single small
+    # GPU, so raising it trades recall latency for contention with extraction.
+    rerank_concurrency: int = Field(default=4, ge=1)
+
     extract_enabled: bool = True
     mcp_host: str = "0.0.0.0"
     mcp_port: int = 8080
