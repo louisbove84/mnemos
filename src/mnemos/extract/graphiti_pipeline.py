@@ -21,7 +21,7 @@ from mnemos.ingest.models import Conversation
 log = logging.getLogger(__name__)
 
 
-async def build_graphiti(settings: Settings) -> Graphiti:
+async def build_graphiti(settings: Settings, *, build_indices: bool = True) -> Graphiti:
     # Keep Graphiti's internal dim in sync with the configured embedder.
     os.environ.setdefault("EMBEDDING_DIM", str(settings.embed_dim))
 
@@ -41,7 +41,9 @@ async def build_graphiti(settings: Settings) -> Graphiti:
         embedder=build_embedder(settings),
         cross_encoder=build_reranker(settings),
     )
-    await graphiti.build_indices_and_constraints()
+    # Ingest owns index creation. MCP is a reader and must not race that on startup.
+    if build_indices:
+        await graphiti.build_indices_and_constraints()
     return graphiti
 
 
