@@ -79,12 +79,21 @@ cross-encoder did not beat a general 0.5B model here. On 13 queries that compari
 evidence, and the honest reading is that the dataset is too small to separate them rather
 than that BGE is not better.
 
-**The harness measures a path that user-facing recall does not currently take.** The MCP
-`recall_memory` tool queries a Neo4j fulltext index directly and falls back to a Postgres
-`ILIKE`, so neither the embedder nor the reranker is in it. Today they affect only the write
-path, where Graphiti's search drives entity resolution. Routing recall through Graphiti's
-hybrid search is what makes these numbers describe what a user experiences, and is the next
-change.
+**Nothing in production calls the reranker yet, and recall does not use the embedder
+either.** The wiring is in place on the Graphiti client, but mnemos never invokes
+Graphiti's hybrid search API today.
+
+During ingest, Graphiti's entity dedup runs cosine similarity through the embedder
+directly — Graphiti's own comment on that path is "without reranking". The 0.5B LLM
+still runs there, but for extraction and dedupe prompts, not for vectors or reranking.
+
+The MCP `recall_memory` tool bypasses Graphiti entirely: it queries a Neo4j fulltext
+index and falls back to a Postgres `ILIKE`. No embedder, no reranker, no hybrid search.
+
+The eval harness is therefore measuring the path Graphiti's `search_` API would take
+(embeddings to shortlist, reranker to reorder), not what ingest or recall currently
+do. Routing `recall_memory` through Graphiti's hybrid search is what makes these
+numbers describe what a user experiences, and is the next change.
 
 ## Alternatives considered
 

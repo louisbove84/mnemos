@@ -25,6 +25,11 @@ cannot score well and anything that does is matching meaning.
   only one answers. This is the number to watch when comparing rerankers, because the other
   seven are answerable from topic alone.
 
+**What this does not measure yet.** Ingest uses the embedder for entity dedup but not the
+reranker. MCP `recall_memory` uses Neo4j fulltext and Postgres keyword search, not Graphiti's
+hybrid search at all. The harness scores the path Graphiti's `search_` API would take once
+recall is wired through it ([ADR 0009](../adr/0009-measured-reranking.md)).
+
 ## Running it
 
 Against the cluster, with both Services port-forwarded. Start the forwards and the run in one
