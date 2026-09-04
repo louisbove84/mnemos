@@ -165,7 +165,9 @@ Quick tool smoke without a full MCP client (HTTP message flow varies by SDK). Pr
 or Claude Desktop pointed at that SSE URL, then call:
 
 - `search_transcripts` with query `Nimbus` or `Cedar Ridge`
-- `recall_memory` with the same query
+- `recall_memory` with the same query — expect `kind: fact` / `entity` / `episode` hits
+  from Graphiti, with `conversation_id` set to the ingest group (the conversation id).
+  Postgres `kind: message` hits only appear if the graph returned fewer than `limit`.
 - `fetch_verbatim` with `conversation_id=conv-fixture-aurora`
 
 You can also exercise the archive from a one-off Python shell inside the mcp pod if needed:

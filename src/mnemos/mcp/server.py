@@ -11,33 +11,48 @@ from typing import Any
 
 import asyncpg
 from mcp.server.fastmcp import FastMCP
-from neo4j import AsyncGraphDatabase
 
 from mnemos.archive import store
 from mnemos.config import Settings, get_settings
+from mnemos.extract.graphiti_pipeline import build_graphiti
+from mnemos.mcp.recall import recall
 
 log = logging.getLogger(__name__)
+
+
+class _PoolArchive:
+    """Adapts an asyncpg pool to the MessageArchive protocol used by recall."""
+
+    def __init__(self, pool: asyncpg.Pool) -> None:
+        self._pool = pool
+
+    async def search_messages(self, query: str, limit: int) -> list[dict[str, Any]]:
+        return await store.search_messages(self._pool, query, limit=limit)
 
 
 class AppState:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
         self.pool: asyncpg.Pool | None = None
-        self.neo4j_driver: Any = None
+        self.graphiti: Any = None
 
     async def startup(self) -> None:
         self.pool = await store.connect(self.settings.postgres_dsn)
         await store.ensure_schema(self.pool)
-        self.neo4j_driver = AsyncGraphDatabase.driver(
-            self.settings.neo4j_uri,
-            auth=(self.settings.neo4j_user, self.settings.neo4j_password),
-        )
+        try:
+            self.graphiti = await build_graphiti(self.settings, build_indices=False)
+        except Exception:
+            # Stay up on Postgres alone so fetch_verbatim and search_transcripts still work
+            # while Neo4j or embed is coming up.
+            log.exception("Graphiti client failed to start; recall will use Postgres only")
+            self.graphiti = None
 
     async def shutdown(self) -> None:
+        if self.graphiti is not None:
+            await self.graphiti.close()
+            self.graphiti = None
         if self.pool is not None:
             await self.pool.close()
-        if self.neo4j_driver is not None:
-            await self.neo4j_driver.close()
 
 
 def create_mcp(settings: Settings | None = None) -> FastMCP[Any]:
@@ -61,84 +76,15 @@ def create_mcp(settings: Settings | None = None) -> FastMCP[Any]:
 
     @mcp.tool()
     async def recall_memory(query: str, limit: int = 8) -> str:
-        """Search temporal memory (Neo4j entities/facts) and fall back to transcript text."""
-        limit = max(1, min(limit, 25))
-        hits: list[dict[str, Any]] = []
-
-        assert state.neo4j_driver is not None
-        cypher = """
-        CALL db.index.fulltext.queryNodes('node_name_and_summary', $q) YIELD node, score
-        RETURN coalesce(node.name, node.uuid) AS name,
-               coalesce(node.summary, node.content, '') AS summary,
-               labels(node) AS labels,
-               score
-        ORDER BY score DESC
-        LIMIT $limit
-        """
-        try:
-            async with state.neo4j_driver.session() as session:
-                result = await session.run(cypher, q=query, limit=limit)
-                records = [record.data() async for record in result]
-                for rec in records:
-                    hits.append(
-                        {
-                            "source": "neo4j",
-                            "name": rec.get("name"),
-                            "summary": rec.get("summary"),
-                            "labels": rec.get("labels"),
-                            "score": rec.get("score"),
-                        }
-                    )
-        except Exception as exc:
-            # Fulltext index may not exist yet on a fresh Neo4j.
-            log.warning("Neo4j fulltext search unavailable: %s", exc)
-            fallback = """
-            MATCH (n)
-            WHERE (n:Entity OR n:Episodic)
-              AND (
-                toLower(coalesce(n.name, '')) CONTAINS toLower($q)
-                OR toLower(coalesce(n.summary, '')) CONTAINS toLower($q)
-                OR toLower(coalesce(n.content, '')) CONTAINS toLower($q)
-              )
-            RETURN coalesce(n.name, n.uuid) AS name,
-                   coalesce(n.summary, n.content, '') AS summary,
-                   labels(n) AS labels,
-                   1.0 AS score
-            LIMIT $limit
-            """
-            try:
-                async with state.neo4j_driver.session() as session:
-                    result = await session.run(fallback, q=query, limit=limit)
-                    records = [record.data() async for record in result]
-                    for rec in records:
-                        hits.append(
-                            {
-                                "source": "neo4j",
-                                "name": rec.get("name"),
-                                "summary": rec.get("summary"),
-                                "labels": rec.get("labels"),
-                                "score": rec.get("score"),
-                            }
-                        )
-            except Exception as exc2:
-                log.warning("Neo4j fallback search failed: %s", exc2)
-
+        """Search temporal memory (facts, entities, episodes) and fall back to transcript text."""
         assert state.pool is not None
-        if len(hits) < limit:
-            pg_hits = await store.search_messages(state.pool, query, limit=limit - len(hits))
-            for row in pg_hits:
-                hits.append(
-                    {
-                        "source": "postgres",
-                        "message_id": row["id"],
-                        "conversation_id": row["conversation_id"],
-                        "conversation_title": row["conversation_title"],
-                        "role": row["role"],
-                        "content": row["content"][:500],
-                    }
-                )
-
-        return json.dumps({"query": query, "results": hits}, default=str, indent=2)
+        payload = await recall(
+            query,
+            limit,
+            graphiti=state.graphiti,
+            archive=_PoolArchive(state.pool),
+        )
+        return json.dumps(payload, default=str, indent=2)
 
     @mcp.tool()
     async def fetch_verbatim(
