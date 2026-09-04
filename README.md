@@ -43,8 +43,8 @@ Early. Building in phases, in the open.
 | 0 | GPU inference on Kubernetes (k3s; local OpenAI-compatible server today, any local or paid model API later) | Complete — see [`docs/phases/00-gpu-inference.md`](docs/phases/00-gpu-inference.md) |
 | 1 | Platform foundation (GitOps, Helm, observability) | Complete — see [`docs/phases/01-platform-foundation.md`](docs/phases/01-platform-foundation.md) |
 | 2 | Air-gapped delivery (Harbor, Zarf) | Deferred until MVP — see [`docs/phases/03-04-memory-mvp.md`](docs/phases/03-04-memory-mvp.md) |
-| 3 | Data platform (slim: hostPath inbox; MinIO/Spark/Delta deferred) | In progress — combined with Phase 4 MVP |
-| 4 | Memory engine (Graphiti, Neo4j, MCP server) | In progress — see [`docs/phases/03-04-memory-mvp.md`](docs/phases/03-04-memory-mvp.md) |
+| 3 | Data platform (slim: hostPath inbox; MinIO/Spark/Delta deferred) | Complete — combined with Phase 4 MVP |
+| 4 | Memory engine (Graphiti, Neo4j, MCP server) | End to end on the cluster; extraction quality is the open problem — see [`docs/phases/03-04-memory-mvp.md`](docs/phases/03-04-memory-mvp.md) |
 | 5 | Web UI and decision journal | Not started |
 | 6 | Multi-node cluster, scale-to-zero serving | Not started |
 

@@ -204,11 +204,39 @@ kubectl -n mnemos create job ingest-reembed --from=cronjob/ingest
 
 No index work is needed — the range and fulltext indexes Graphiti builds carry no dimension.
 
+## When something does not come up
+
+**`postgres-0` or `neo4j-0` stuck in `CreateContainerConfigError`.** The auth secrets in
+step 0 do not exist. `kubectl -n mnemos describe pod` names the missing one.
+
+**A StatefulSet pod keeps crash-looping on old settings after you fixed them.** A rolling
+update only replaces a pod once the current one is Ready, so a pod that can never be Ready
+blocks the fix that would make it Ready. Confirm the mismatch, then delete the pod so the
+controller recreates it from the new revision. The PVC is untouched.
+
+```bash
+kubectl -n mnemos get sts neo4j \
+  -o custom-columns=CURRENT:.status.currentRevision,UPDATE:.status.updateRevision
+# differ -> the pod is running the old template
+kubectl -n mnemos delete pod neo4j-0
+```
+
+**The inbox does not exist.** Only `processed` is created for you. Create
+`/srv/mnemos/data/inbox/{gemini,grok}` before copying exports in, and make sure the files
+are world-readable.
+
+**Re-running ingest on the same exports.** A successful run moves files to
+`processed/`, and the CronJob only reads `inbox/`. Copy them back first.
+
 ## Done when
 
-- [ ] Fixture (or real export) ingested without hand SQL
-- [ ] Messages visible in Postgres
-- [ ] `embed` returns a 768-length vector and Neo4j entities carry embeddings of that width
-- [ ] Neo4j has Graphiti data *or* extraction errors are logged and Postgres fallback works
-- [ ] MCP `search_transcripts` / `recall_memory` returns fixture content
-- [ ] `postgres`, `neo4j`, `embed`, `ingest`, `mcp` Synced/Healthy in Argo
+- [x] Fixture (or real export) ingested without hand SQL
+- [x] Messages visible in Postgres
+- [x] `embed` returns a 768-length vector and Neo4j entities carry embeddings of that width
+- [x] Neo4j has Graphiti data *or* extraction errors are logged and Postgres fallback works
+- [x] MCP `search_transcripts` / `recall_memory` returns fixture content
+- [x] `postgres`, `neo4j`, `embed`, `ingest`, `mcp` Synced/Healthy in Argo
+
+All six passed on the first full bring-up. Read the last two narrowly: recall returns graph
+facts, and the facts themselves are largely hallucinated by the 0.5B extraction model. See
+[the phase notes](../phases/03-04-memory-mvp.md#what-the-first-real-bring-up-taught).
