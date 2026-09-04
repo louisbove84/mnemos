@@ -15,6 +15,10 @@ spec:
       labels:
         {{- include "neo4j.labels" . | nindent 8 }}
     spec:
+      # Neo4j 5 reads every NEO4J_* env var as a config setting under strict validation,
+      # and the neo4j Service makes Kubernetes inject NEO4J_PORT_7687_TCP_PORT and friends.
+      # Those parse as unknown settings and the server refuses to start.
+      enableServiceLinks: false
       containers:
         - name: neo4j
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
