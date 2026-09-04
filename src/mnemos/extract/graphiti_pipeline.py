@@ -9,7 +9,7 @@ from typing import Any
 
 from graphiti_core import Graphiti
 from graphiti_core.llm_client.config import LLMConfig
-from graphiti_core.llm_client.openai_client import OpenAIClient
+from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
 from graphiti_core.nodes import EpisodeType
 
 from mnemos.archive.store import message_to_episode_text
@@ -31,8 +31,12 @@ async def build_graphiti(settings: Settings, *, build_indices: bool = True) -> G
         base_url=settings.llm_base_url,
         small_model=settings.llm_model,
     )
+    # OpenAIClient extracts through responses.parse(). llama.cpp answers /v1/responses but
+    # ignores the schema there, so the model free-runs and Graphiti gets prose to parse as
+    # JSON. The generic client sends response_format on chat/completions, which llama.cpp
+    # does constrain.
     # 0.5B + small context cannot honor Graphiti's default 16k completion budget.
-    llm_client = OpenAIClient(config=llm_config, max_tokens=512)
+    llm_client = OpenAIGenericClient(config=llm_config, max_tokens=512)
     graphiti = Graphiti(
         settings.neo4j_uri,
         settings.neo4j_user,
