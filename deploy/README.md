@@ -31,6 +31,11 @@ Memory MVP charts (`postgres`, `neo4j`, `embed`, `ingest`, `mcp`) also deploy in
 exports land on the node at `/srv/mnemos/data/inbox` ([ADR 0007](../docs/adr/0007-hostpath-inbox-over-minio.md)).
 End-to-end smoke test: [`docs/runbooks/phase-3-4-memory-mvp.md`](../docs/runbooks/phase-3-4-memory-mvp.md).
 
+Reranking reuses the `llm` Service rather than adding a component, set by `rerank.mode` in
+[`helm/ingest/values.yaml`](helm/ingest/values.yaml) ([ADR 0009](../docs/adr/0009-measured-reranking.md)).
+Retrieval quality is measurable rather than assumed: see
+[`docs/runbooks/retrieval-evaluation.md`](../docs/runbooks/retrieval-evaluation.md).
+
 `zarf/` remains reserved for Phase 2, which is deferred until this MVP is worth packaging.
 
 ## Target environment
