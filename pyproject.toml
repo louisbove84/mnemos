@@ -36,6 +36,7 @@ mypy = "^1.13"
 mnemos-ingest = "mnemos.ingest.cli:main"
 mnemos-mcp = "mnemos.mcp.server:main"
 mnemos-eval = "mnemos.eval.cli:main"
+mnemos-eval-extract = "mnemos.eval.extract_cli:main"
 
 [build-system]
 requires = ["poetry-core"]

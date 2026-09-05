@@ -82,18 +82,53 @@ request to each endpoint and compare. [ADR 0004](../adr/0004-openai-compatible-s
 assumed the interface was the contract. It is the contract for *routing*; per-feature
 support has to be probed.
 
-**The 0.5B model hallucinates, and now there is evidence.** With extraction finally running,
+**The graph was not hallucinated. It was plagiarised.** With extraction finally running,
 qwen2.5-0.5b produced one fact from the hike transcript:
 
 > "Mustang is the owner of the dog named Nimbus"
 
-There is no Mustang. Entities include "Nisha's dad", "Jordan", and "Alex", none of which
-appear in any transcript, and several entity summaries came back empty. Because the graph
-holds exactly one fact, it ranks first for every query, including ones about housing and
-defense contractors.
+There is no Mustang. Entities included "Nisha's dad", "Jordan", and "Alex", none of which
+appear in any transcript. The obvious reading was that a 0.5B model invents things, and that a
+bigger one would invent fewer. Both halves of that turned out to be wrong.
 
-So recall works and returns the wrong thing. Retrieval quality
-([ADR 0009](../adr/0009-measured-reranking.md)) was measured against a hand-labeled set and
-says nothing about extraction quality, which is now the binding constraint. The next
-decision is a bigger extraction model, and it needs its own evaluation — the current harness
-cannot see this failure at all.
+Every one of those names is **verbatim from Graphiti's own few-shot prompt**.
+`graphiti_core/prompts/extract_nodes.py` teaches possessive qualification with *"Nisha: My dad
+is visiting next week"* and object extraction with *"the windshield on my Mustang got
+cracked"*. The model was not inventing. It was extracting from the instructions, which sit
+where the input should be: the transcript lands about 31% into a 7,100-character prompt, with
+roughly 4,900 characters of examples after it, and the examples are formatted as
+`Message: "..."` — structurally identical to the real `<CURRENT MESSAGE>` block.
+
+Two hypotheses died cheaply here, which was worth more than either would have been if it had
+survived. Truncation was the first: llama.cpp reports `truncated = 0` on every request and the
+prompt is about 2,050 tokens against a 4,096 window, so nothing was being dropped. Position was
+the second: restating the transcript at the very end of the prompt changed the 0.5B's output
+not at all.
+
+**Model size does not fix it.** Measured with the new
+[extraction harness](../runbooks/extraction-evaluation.md):
+
+| Model | recall | contamination | filtered contamination |
+| --- | --- | --- | --- |
+| qwen2.5-0.5b | 0.333 | 0.348 | 0.000 |
+| qwen2.5-1.5b | 1.000 | 0.131 | 0.000 |
+| qwen2.5-3b | 0.778 | 0.287 | 0.000 |
+
+The 3B copies example names as readily as the 0.5B. Six times the parameters bought nothing on
+the metric that mattered. What does work is a deterministic check the model is not involved in:
+discard any entity whose words do not appear in the transcript. That takes contamination to
+zero at every size, and costs no recall, because a real entity is by definition present in its
+own source.
+
+So the two problems are separable and the fixes are unrelated. Contamination is a prompt
+property, answered by grounding. Recall is a capability, answered by size — the 0.5B recovers a
+third of the expected entities and the 1.5B recovers all of them, while the 3B is no better and
+costs twice the VRAM.
+
+The wider lesson is about instrumentation. Retrieval quality
+([ADR 0009](../adr/0009-measured-reranking.md)) was measured carefully against a hand-labeled
+set, and every one of those numbers stayed healthy while the graph filled with Graphiti's
+documentation. A ranking metric scores the order of passages that are correct by construction;
+it is structurally incapable of noticing that the corpus is fiction. The eval that catches this
+had to assert something a ranking metric never asks: that a returned entity exists in the text
+it came from.
