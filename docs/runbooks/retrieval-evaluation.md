@@ -25,10 +25,15 @@ cannot score well and anything that does is matching meaning.
   only one answers. This is the number to watch when comparing rerankers, because the other
   seven are answerable from topic alone.
 
-**What this does not measure yet.** Ingest uses the embedder for entity dedup but not the
+**What this does not measure.** Ingest uses the embedder for entity dedup but not the
 reranker. MCP `recall_memory` uses Graphiti hybrid search (embedder + reranker) with a
 Postgres verbatim pad when the graph is thin ([ADR 0010](../adr/0010-recall-through-graphiti-search.md)).
 The harness scores that Graphiti path in isolation.
+
+It also says nothing about whether the graph contents are *true*. Every passage here is
+correct by construction, so a ranking metric cannot see a fabricated entity — and the first
+real graph was almost entirely fabricated while these numbers looked healthy. Extraction has
+its own harness: [`extraction-evaluation.md`](extraction-evaluation.md).
 
 ## Running it
 
