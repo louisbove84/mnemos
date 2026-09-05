@@ -57,12 +57,19 @@ fi
 cat <<EOF
 
 Neo4j Browser:  http://127.0.0.1:$HTTP_PORT
-Connect URL:    neo4j://127.0.0.1:$BOLT_PORT   (pre-filled)
+Connect URL:    bolt://127.0.0.1:$BOLT_PORT
+                Change the scheme dropdown from neo4j:// to bolt://. The default routing
+                scheme asks the server for its address, gets the pod hostname back, and
+                fails in a way that looks like a rejected password.
 Username:       neo4j
 EOF
 
 if [[ -f "$CREDENTIALS" ]]; then
   echo "Password:       \$MNEMOS_NEO4J_PASSWORD in $CREDENTIALS"
+  if command -v pbcopy >/dev/null 2>&1; then
+    echo "                copy it without displaying it:"
+    echo "                grep MNEMOS_NEO4J_PASSWORD $CREDENTIALS | cut -d= -f2 | tr -d '\\n' | pbcopy"
+  fi
 else
   echo "Password:       from the neo4j-auth secret; $CREDENTIALS not found"
 fi
