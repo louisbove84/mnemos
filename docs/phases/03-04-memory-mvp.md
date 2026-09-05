@@ -20,6 +20,8 @@ air-gap bundle.
 - MCP server with search/recall and verbatim fetch
 - Helm charts and Argo Applications for postgres, neo4j, ingest, mcp
 - Smoke test: [`docs/runbooks/phase-3-4-memory-mvp.md`](../runbooks/phase-3-4-memory-mvp.md)
+- Graph inspection through the bundled Neo4j Browser:
+  [`docs/runbooks/graph-visualization.md`](../runbooks/graph-visualization.md)
 
 ## Explicitly deferred
 
