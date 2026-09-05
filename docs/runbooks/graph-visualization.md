@@ -15,8 +15,27 @@ JSON.
 ./scripts/graph-browser.sh
 ```
 
-Then open <http://127.0.0.1:7474>, and connect as `neo4j` with the password from
-`~/.mnemos/credentials.env`. The connect dialog pre-fills `neo4j://127.0.0.1:7687`.
+Then open <http://127.0.0.1:7474> and connect with:
+
+| Field | Value |
+| --- | --- |
+| Connect URL | **`bolt://`** `127.0.0.1:7687` — change the scheme dropdown from `neo4j://` |
+| Username | `neo4j` |
+| Password | `MNEMOS_NEO4J_PASSWORD` in `~/.mnemos/credentials.env` |
+
+**Change the scheme to `bolt://`.** The dialog defaults to `neo4j://`, which is the routing
+protocol: the driver connects, asks the server where the database lives, and gets told
+`neo4j-0` — the pod hostname, because the chart sets no `server.default_advertised_address`.
+That name does not resolve on the workstation, so the connection dies immediately after you
+submit credentials and Browser reports it as a login failure. The password is not the problem.
+`bolt://` connects directly and skips the routing lookup.
+
+To avoid mistyping a 28-character generated password, put it on the clipboard instead of
+reading it off the screen:
+
+```bash
+grep MNEMOS_NEO4J_PASSWORD ~/.mnemos/credentials.env | cut -d= -f2 | tr -d '\n' | pbcopy
+```
 
 Neo4j Browser is a client-side application. It loads over HTTP on 7474 and then opens its own
 Bolt connection *from the workstation*, which is why the script forwards two ports and why
