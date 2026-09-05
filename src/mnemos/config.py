@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     llm_base_url: str = "http://llm:8000/v1"
     llm_api_key: str = "not-needed"
-    llm_model: str = "/models/qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    llm_model: str = "/models/qwen2.5-1.5b/qwen2.5-1.5b-instruct-q4_k_m.gguf"
 
     # Embeddings come from a local OpenAI-compatible server. "hash" swaps in the
     # deterministic stand-in, which has no semantics and is only for tests and

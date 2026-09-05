@@ -9,12 +9,12 @@ from typing import Any
 
 from graphiti_core import Graphiti
 from graphiti_core.llm_client.config import LLMConfig
-from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
 from graphiti_core.nodes import EpisodeType
 
 from mnemos.archive.store import message_to_episode_text
 from mnemos.config import Settings
 from mnemos.extract.embedder import build_embedder
+from mnemos.extract.grounding import GroundedEntityClient, current_episode
 from mnemos.extract.reranker import build_reranker
 from mnemos.ingest.models import Conversation
 
@@ -35,8 +35,14 @@ async def build_graphiti(settings: Settings, *, build_indices: bool = True) -> G
     # ignores the schema there, so the model free-runs and Graphiti gets prose to parse as
     # JSON. The generic client sends response_format on chat/completions, which llama.cpp
     # does constrain.
-    # 0.5B + small context cannot honor Graphiti's default 16k completion budget.
-    llm_client = OpenAIGenericClient(config=llm_config, max_tokens=512)
+    #
+    # GroundedEntityClient additionally drops extracted entities that do not appear in the
+    # episode, because every model tried copies names out of Graphiti's few-shot examples
+    # ([ADR 0011](../../../docs/adr/0011-grounded-entity-extraction.md)).
+    #
+    # A small model with a small context cannot honor Graphiti's default 16k completion
+    # budget.
+    llm_client = GroundedEntityClient(config=llm_config, max_tokens=512)
     graphiti = Graphiti(
         settings.neo4j_uri,
         settings.neo4j_user,
@@ -57,14 +63,21 @@ async def extract_conversation(
 ) -> None:
     text = message_to_episode_text(conversation.messages, conversation.title)
     reference_time = conversation.updated_at or conversation.created_at or datetime.now(UTC)
-    await graphiti.add_episode(
-        name=conversation.title or conversation.id,
-        episode_body=text,
-        source=EpisodeType.message,
-        source_description=f"{conversation.provider} export",
-        reference_time=reference_time,
-        group_id=conversation.id,
-    )
+    # Graphiti does not pass the episode text down to the LLM client, so the grounding filter
+    # cannot see what it is supposed to be grounding against. Publish it for the duration of
+    # the call, and clear it afterwards so a later call cannot check against a stale episode.
+    token = current_episode.set(text)
+    try:
+        await graphiti.add_episode(
+            name=conversation.title or conversation.id,
+            episode_body=text,
+            source=EpisodeType.message,
+            source_description=f"{conversation.provider} export",
+            reference_time=reference_time,
+            group_id=conversation.id,
+        )
+    finally:
+        current_episode.reset(token)
 
 
 async def extract_conversations(
