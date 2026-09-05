@@ -36,7 +36,7 @@ neo4j:
 llm:
   baseUrl: http://llm:8000/v1
   apiKey: not-needed
-  model: /models/qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
+  model: /models/qwen2.5-1.5b/qwen2.5-1.5b-instruct-q4_k_m.gguf
 
 embed:
   # "hash" falls back to a deterministic non-semantic embedder, which keeps ingest

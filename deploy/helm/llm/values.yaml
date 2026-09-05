@@ -6,9 +6,13 @@ image:
   pullPolicy: IfNotPresent
 
 # Weights live on the node, not in the image, and not in git.
+#
+# 1.5B rather than 0.5B because entity-extraction recall goes from 0.333 to 1.000, measured
+# with mnemos-eval-extract. 3B was tried and rejected: no better on recall and twice the
+# VRAM. See docs/adr/0011-grounded-entity-extraction.md.
 model:
   hostPath: /srv/mnemos/models
-  file: qwen2.5-0.5b/qwen2.5-0.5b-instruct-q4_k_m.gguf
+  file: qwen2.5-1.5b/qwen2.5-1.5b-instruct-q4_k_m.gguf
   contextSize: 4096
   # 99 offloads every layer it can fit; the GPU has 4 GB.
   gpuLayers: 99

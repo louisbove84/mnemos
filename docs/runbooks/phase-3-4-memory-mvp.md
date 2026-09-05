@@ -130,7 +130,7 @@ kubectl -n mnemos exec -it statefulset/postgres -- \
 
 You should see the Aurora hike / Nimbus fixture text.
 
-Graphiti extraction quality on the 0.5B model is best-effort. Check Neo4j for any nodes:
+Check Neo4j for the extracted nodes:
 
 ```bash
 kubectl -n mnemos exec -it statefulset/neo4j -- \
@@ -237,6 +237,11 @@ are world-readable.
 - [x] MCP `search_transcripts` / `recall_memory` returns fixture content
 - [x] `postgres`, `neo4j`, `embed`, `ingest`, `mcp` Synced/Healthy in Argo
 
-All six passed on the first full bring-up. Read the last two narrowly: recall returns graph
-facts, and the facts themselves are largely hallucinated by the 0.5B extraction model. See
-[the phase notes](../phases/03-04-memory-mvp.md#what-the-first-real-bring-up-taught).
+All six passed on the first full bring-up, but the graph they passed against was almost
+entirely copied out of Graphiti's own prompt examples. That is fixed by grounding extracted
+entities in the transcript ([ADR 0011](../adr/0011-grounded-entity-extraction.md)); the
+diagnosis is in [the phase notes](../phases/03-04-memory-mvp.md#what-the-first-real-bring-up-taught).
+
+These six checks cannot tell you whether the graph is *true* — that is what
+[`extraction-evaluation.md`](extraction-evaluation.md) is for. Run it after any change to the
+extraction model.
