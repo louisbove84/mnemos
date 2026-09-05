@@ -31,6 +31,11 @@ Memory MVP charts (`postgres`, `neo4j`, `embed`, `ingest`, `mcp`) also deploy in
 exports land on the node at `/srv/mnemos/data/inbox` ([ADR 0007](../docs/adr/0007-hostpath-inbox-over-minio.md)).
 End-to-end smoke test: [`docs/runbooks/phase-3-4-memory-mvp.md`](../docs/runbooks/phase-3-4-memory-mvp.md).
 
+The graph is inspectable without deploying anything: Neo4j Community bundles Neo4j Browser on
+the `neo4j` Service's HTTP port. See
+[`docs/runbooks/graph-visualization.md`](../docs/runbooks/graph-visualization.md), which also
+records why this stays a port-forward instead of joining Grafana and Argo CD on a hostname.
+
 Reranking reuses the `llm` Service rather than adding a component, set by `rerank.mode` in
 [`helm/ingest/values.yaml`](helm/ingest/values.yaml) and
 [`helm/mcp/values.yaml`](helm/mcp/values.yaml)
